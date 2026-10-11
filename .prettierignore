@@ -1,0 +1,3 @@
+# Tema duplicado idêntico ao portal-shell: manter byte-equivalência com o host.
+# O prettier reformataria (2 espaços/aspas duplas) e quebraria o `diff` anti-drift.
+src/index.css
