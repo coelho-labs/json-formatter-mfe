@@ -12,7 +12,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | Fase | Descrição | Status | Commit |
 | ---- | --------- | ------ | ------ |
 | 0 | Saneamento e base navegável | ✅ | (a commitar) |
-| 1 | Núcleo puro `src/lib/json.ts` | ⬜ | — |
+| 1 | Núcleo puro `src/lib/json.ts` | ✅ | (a commitar) |
 | 2 | Integração CodeMirror (theme + CodeEditor) | ⬜ | — |
 | 3 | Ferramenta núcleo em texto | ⬜ | — |
 | 4 | Extras puros (sort/escape/unescape) | ⬜ | — |
@@ -106,13 +106,27 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Revisão: contratos MFE validados (sem router no entry, navegação relativa `relative="path"`, `RemoteAppEntry` fora do `exposes`).
 - Observações: `vite` resolveu para 8.3.4; Fase 0 ainda **não commitada**.
 
+### 2026-10-12 — Fase 1 concluída (núcleo puro `src/lib/json.ts`)
+
+- Entregue: tipos `IndentOption`/`JsonError`/`JsonResult`; helpers **privados** `deriveLocation`, `locateError`, `parseJson` (tipo interno `ParseOutcome` com `value: unknown`); públicas `validateJson`, `formatJson`, `minifyJson`.
+- Contrato: `validateJson` valida e devolve a própria entrada; `formatJson`/`minifyJson` validam e **re-serializam** (canonicalizam) com indentação / compacto. Em erro, as três devolvem o mesmo `JsonError`.
+- Localização do erro: `locateError` prefere `line X column Y` (cobre Firefox/Safari) → senão `position N` (V8) com `deriveLocation` → fallback `-1/-1/-1` (desconhecido).
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` limpos (DTS + `remoteEntry.js`/`mf-manifest.json` gerados).
+- Revisões aplicadas: regex `column (?<column>...)` (faltava o espaço — o ramo line/column estava morto); `parseJson` privado com `value: unknown` (tira o `any` de circulação); `.at(-1)` (S7755); `.exec` sobre literal (S6594/S7723); early-return no lugar de `else`; formatação prettier.
+- Decisão registrada: no ramo line/column, `position` fica `-1` mesmo quando o V8 informa `at position N` (offset não é consumido pela UI). Sem impacto; reavaliar só se algum consumidor precisar do offset.
+- Escopo: `format`/`minify` **não** ordenam chaves (isso é a Fase 4) nem preservam o texto original — re-serializam a partir do valor parseado.
+
 ## Pendências / pontos abertos
 - Confirmar semântica de escape/unescape (acima está provisória).
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
 - Corrigir a versão do `vite` na tabela do `AGENTS.md` (instalado 8.3.4; tabela diz 8.2.1) — fazer na Fase 7.
 
 ## Armadilhas aprendidas (reviews)
-- (vazio — preencher conforme os reviews acontecem)
+- Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
+- `JSON.parse` retorna `any`: tipar o retorno como `string` mente e **passa até com `strict`** (o `any` fura). Tipar o parse interno como `unknown` força a conversão explícita (`JSON.stringify`) nas funções públicas.
+- Sonar: usar `.exec()` sobre **literal** de regex atende S6594 (prefer `exec` sobre `match`) e não aciona S7723 (que só pega `RegExp(...)` sem `new`); `new RegExp(/literal/)` é redundante. Array: preferir `.at(-1)` a `[length - 1]` (S7755).
+- O `eslint.config.js` **não** integra prettier → formatação (espaços extras, `;` faltando) não é pega no `npm run lint`; depende do prettier na IDE/`--write`.
+- `JSON.stringify(value, replacer?, space?)` tipa `string` (não `string | undefined`) na lib do TS 6 instalada — `?? ""` desnecessário.
 
 ## Última atualização
-- 2026-10-11 · commit base: nenhum (Fase 0 implementada e verificada, ainda não commitada)
+- 2026-10-12 · commit base: c4fa071 (Fase 0) · Fase 1 implementada e verificada, ainda **não commitada**
