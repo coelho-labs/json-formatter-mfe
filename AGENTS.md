@@ -63,7 +63,7 @@ npm run preview # servidor de produção (porta 4173)
 
 ## Module Federation (plugin atual — não confunda!)
 
-- O pacote instalado/configurado é @module-federation/vite (oficial, v1.20.6). README e docs antigos citam @originjs/vite-plugin-federation — está desatualizado, ignore. Não instale o @originjs para novas features.
+- O pacote instalado/configurado é @module-federation/vite (oficial, v1.23.4). README e docs antigos citam @originjs/vite-plugin-federation — está desatualizado, ignore. Não instale o @originjs para novas features.
 - O plugin exporta federation() (adicionado em vite.config.ts) e createModuleFederationConfig() (helper de tipagem para a config).
 - A config fica em module-federation.config.ts (arquivo separado, importado em vite.config.ts com extensão .ts).
 - Opções relevantes do createModuleFederationConfig:
@@ -82,7 +82,7 @@ npm run preview # servidor de produção (porta 4173)
 - O core registra em runtime via @module-federation/runtime apontando para o manifest: registerRemotes([{ name: 'json-formatter', entry: 'http://localhost:4177/mf-manifest.json' }]).
 - Consome com loadRemote('json-formatter/RemoteAppEntry'), montado em <Route path="/json/*"> com <Suspense> (standalone usa /json-formatter/\*).
 - Não declarar o remote em remotes estático (mantém opcional e evita crash de boot com remote offline).
-- Compartilhar react/react-dom/react-router-dom como singleton: true no core e alinhar a versão do react-router-dom (7.18.2).
+- Compartilhar react/react-dom/react-router-dom como singleton: true no core e alinhar a versão do react-router-dom (7.18.4).
 - Dev: CORS coberto pelo Vite. Prod: servir remoteEntry + chunks no mesmo origin (reverse proxy/CDN); base da build via VITE_BASE.
 - Convenção: todo MFE expõe ./RemoteAppEntry como chave de entrada padrão; o core sempre importa loadRemote('<nome>/RemoteAppEntry').
 - A lista de remotes (nome → URL) deve vir de um registry (ex: GET /api/mfe-registry) para plugar módulos novos sem rebuild do core.
@@ -98,36 +98,37 @@ npm run preview # servidor de produção (porta 4173)
 
 O Core/Host é o dono do tema (toggle em portal-shell, chave coelho-theme, classe .dark no <html> + anti-FOUC). O ecossistema replica o tema por duplicação idêntica — sem pacote compartilhado (evolução futura), cada MFE carrega uma cópia byte-idêntica do index.css do Core:
 
-- src/index.css (bundlado no remote via RemoteAppEntry.tsx) é byte-idêntico ao portal-shell/src/index.css (fonte canônica; o content-delivery também o mantém idêntico). Contém @import tailwindcss/tw-animate-css/shadcn/tailwind.css, @import "@fontsource-variable/geist", @custom-variant dark, @theme inline (mapeia utilities → var(--_)), os tokens :root/.dark + @layer base (_, body, html).
+- src/index.css (bundlado no remote via RemoteAppEntry.tsx) é byte-idêntico ao portal-shell/src/index.css (fonte canônica; o content-delivery também o mantém idêntico). Contém @import tailwindcss/tw-animate-css/shadcn/tailwind.css, @import "@fontsource-variable/geist", @custom-variant dark, @theme inline (mapeia utilities → var(--_)), os tokens :root/.dark (inclui os `--syntax-*` do CodeMirror) + @layer base (_, body, html).
 - Por que é seguro injetar no host: os valores declarados são iguais aos do host — a duplicação não muda o tema; o @font-face do Geist (mesma URL) é deduplicado pelo browser. O risco real é drift: editar um token só aqui faz o CSS remoto sobrepor o do host com valor atingido.
 - Manutenção anti-drift: ao alterar qualquer token, editar o portal-shell/src/index.css e propagar com cp ../portal-shell/src/index.css src/index.css. Verificação: diff ../portal-shell/src/index.css src/index.css deve retornar vazio.
-- .prettierignore inclui src/index.css: o prettier reformataria (2 espaços/aspas duplas) e quebraria a byte-equivalência; o arquivo deve permanecer no formato shadcn default (4 espaços/aspas simples).
+- src/index.css segue o formato prettier do repo (2 espaços/aspas duplas — `.prettierrc` `tabWidth: 2`) e é prettier-stable (`npx prettier --check` aprova). Histórico: o CLI do shadcn gerava o arquivo em 4 espaços/aspas simples; os três repos foram realinhados a 2 espaços (2026-10-12, plan.md) para casar com o prettier — a byte-equivalência é genuína.
+- .prettierignore inclui src/index.css como **defesa**: se a config prettier mudar (ex. `tabWidth`), o arquivo não é reformatado sozinho e o `diff` anti-drift quebraria silenciosamente. Não é mais necessidade técnica nem "formato shadcn default".
 - src/App.tsx (dev shell) aplica .dark no <html> via document.documentElement.classList.toggle("dark", …) — mesmo mecanismo do host. Não há standalone.css.
 
 ## Stack real (versões instaladas — confie no `npm ls`, não no README)
 
 | Pacote                                           | Versão           |
 | ------------------------------------------------ | ---------------- |
-| react / react-dom                                | 19.2.8           |
-| react-router-dom                                 | 7.18.2           |
-| vite                                             | 8.2.1            |
+| react / react-dom                                | 19.3.0           |
+| react-router-dom                                 | 7.18.4           |
+| vite                                             | 8.3.4            |
 | typescript                                       | 6.0.3            |
 | tailwindcss / @tailwindcss/vite                  | 4.3.3            |
-| shadcn (style `base-nova` / Base UI)             | 4.18.0           |
-| @base-ui/react                                   | 1.7.0            |
-| lucide-react                                     | 1.31.0           |
+| shadcn (style `base-nova` / Base UI)             | 4.21.4           |
+| @base-ui/react                                   | 1.9.0            |
+| lucide-react                                     | 1.55.0           |
 | tw-animate-css                                   | 1.4.0            |
-| class-variance-authority / clsx / tailwind-merge | —                |
-| @module-federation/vite                          | 1.20.6           |
-| @vitejs/plugin-react                             | 6.0.5            |
-| @rolldown/plugin-babel                           | 0.2.3            |
+| class-variance-authority / clsx / tailwind-merge | 0.7.1 / 2.1.1 / 3.7.0 |
+| @module-federation/vite                          | 1.23.4           |
+| @vitejs/plugin-react                             | 6.1.2            |
+| @rolldown/plugin-babel                           | 0.2.4            |
 | babel-plugin-react-compiler                      | 1.0.0            |
-| eslint                                           | 10.8.1           |
-| typescript-eslint                                | 8.67.0           |
+| eslint                                           | 10.12.0          |
+| typescript-eslint                                | 8.71.1           |
 | eslint-plugin-react-hooks                        | 7.1.1            |
-| eslint-plugin-react-refresh                      | 0.5.4            |
-| @types/react / @types/react-dom                  | 19.2.18 / 19.2.4 |
-| @types/node                                      | 24.13.3          |
+| eslint-plugin-react-refresh                      | 0.5.7            |
+| @types/react / @types/react-dom                  | 19.3.0 / 19.3.0  |
+| @types/node                                      | 24.19.2          |
 
 - Node: ^20.19.0 ou >=22.12.0 (exigência do plugin de federation).
 - React Compiler habilitado via @rolldown/plugin-babel + reactCompilerPreset() em vite.config.ts — memoização é automática, não otimize manualmente com useMemo/useCallback sem necessidade.

@@ -11,9 +11,9 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 
 | Fase | Descrição | Status | Commit |
 | ---- | --------- | ------ | ------ |
-| 0 | Saneamento e base navegável | ✅ | (a commitar) |
-| 1 | Núcleo puro `src/lib/json.ts` | ✅ | (a commitar) |
-| 2 | Integração CodeMirror (theme + CodeEditor) | ⬜ | — |
+| 0 | Saneamento e base navegável | ✅ | c4fa071 |
+| 1 | Núcleo puro `src/lib/json.ts` | ✅ | 1a529e6 |
+| 2 | Integração CodeMirror (theme + CodeEditor) | 🟨 | (a commitar) |
 | 3 | Ferramenta núcleo em texto | ⬜ | — |
 | 4 | Extras puros (sort/escape/unescape) | ⬜ | — |
 | 5 | Tree view | ⬜ | — |
@@ -38,13 +38,13 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 
 ### Fase 2 — Integração CodeMirror
 - Objetivo: wrapper de editor com tema por tokens.
-- Entregáveis: deps `@codemirror/*` + `@lezer/highlight`; `components/code-editor/theme.ts`; `components/code-editor/CodeEditor.tsx`; copiar `ui/{label,select,separator,tooltip}.tsx` conforme uso.
-- Aceite: editor editável; tema segue `.dark`; sem violar `react-hooks/refs`; CM fora do `shared`.
-- Notas: instalar deps é com o dono.
+- Entregáveis: deps `@codemirror/*` + `@lezer/highlight`; `components/code-editor/theme.ts`; `components/code-editor/CodeEditor.tsx`; tokens `--syntax-*` no `index.css` (os 3 repos, byte-idênticos); smoke do editor em `Tool.page` (provisório, substituído na Fase 3). UI `{label,select,separator,tooltip}` **movida para a Fase 3** (decisão 2026-10-12).
+- Aceite: editor editável; tema segue `.dark` via tokens; `readOnly` por Compartment (não recria a view); `aria-label` no contentDOM; CM fora do `shared`; lint+build.
+- Notas: instalar deps é com o dono; `index.css` dos 3 repos realinhado a 2 espaços (prettier) — byte-equivalência genuína.
 
 ### Fase 3 — Ferramenta núcleo (texto)
 - Objetivo: formatar/minificar/validar/copiar/baixar/limpar.
-- Entregáveis: `pages/tool/hooks/useJsonFormatter.ts`; `components/{Toolbar,JsonInput,JsonOutput}.tsx`; `Tool.page.tsx`.
+- Entregáveis: `pages/tool/hooks/useJsonFormatter.ts`; `components/{Toolbar,JsonInput,JsonOutput}.tsx`; `Tool.page.tsx`; copiar `ui/{label,select,separator,tooltip}.tsx` (absorvido da Fase 2).
 - Deps: 1, 2. Aceite: ações núcleo ok; `await` em `try/catch`; a11y básica.
 
 ### Fase 4 — Extras puros
@@ -116,10 +116,20 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Decisão registrada: no ramo line/column, `position` fica `-1` mesmo quando o V8 informa `at position N` (offset não é consumido pela UI). Sem impacto; reavaliar só se algum consumidor precisar do offset.
 - Escopo: `format`/`minify` **não** ordenam chaves (isso é a Fase 4) nem preservam o texto original — re-serializam a partir do valor parseado.
 
+### 2026-10-12 — Fase 2 implementada e revisada (CodeMirror + tema por tokens)
+
+- Entregue: deps `@codemirror/{state,view,commands,language,lang-json,lint}` + `@lezer/highlight`; `components/code-editor/theme.ts` (tema por tokens via `EditorView.theme` + `HighlightStyle`); `components/code-editor/CodeEditor.tsx` (wrapper CM6 com `value`/`onChange`/`readOnly`/`ariaLabel`/`className`); smoke em `Tool.page` (2 editores: entrada editável + prévia read-only).
+- Tokens: adicionados `--syntax-property|string|number|literal` em `:root` e `.dark` no `src/index.css`, propagados via `cp` para `../portal-shell/src/index.css` e `../content-delivery-mfe/src/index.css` — os 3 **byte-idênticos** (`diff` vazio). CodeMirror **não** entra no `shared`.
+- `index.css` realinhado a 2 espaços/aspas duplas: **descoberta** — a "byte-equivalência" citada na Fase 0 era falsa (este repo nascido em 4 espaços pelo CLI do shadcn; portal/content-delivery em 2 por não terem `.prettierignore`). Os 3 repos foram alinhados ao prettier do repo (`.prettierrc` `tabWidth: 2`); o `diff` anti-drift agora é genuinamente vazio. `.prettierignore` mantido como defesa de config futura (arquivo é prettier-stable).
+- `CodeEditor`: `readOnly` via **Compartment** (`reconfigure` no effect de `[readOnly]`; criação com deps `[initialDoc, initialAriaLabel]` — não recria a view nem perde o doc). `aria-label` via `EditorView.contentAttributes` (o `contentDOM` tem `role="textbox"`); `aria-label` num `<div>` sem role não gera nome acessível.
+- Decisão: UI `{label,select,separator,tooltip}` adiada para a **Fase 3** (o smoke não as requer).
+- Revisões aplicadas: removido `lineNumbers()` duplicado; `contentAttributes.of(...)` estava como **expressão solta** (fora do array de extensions — label morto, e nem eslint/tsc pegam) e foi movido para o array; `Tool.page` com `w-full` nos wrappers (senão `items-center` colapsava os editores); import com extensão `.tsx`.
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; `npx prettier --check` limpo nos arquivos novos; `diff` dos 3 `index.css` vazio. **Ainda não commitada**.
+
 ## Pendências / pontos abertos
 - Confirmar semântica de escape/unescape (acima está provisória).
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
-- Corrigir a versão do `vite` na tabela do `AGENTS.md` (instalado 8.3.4; tabela diz 8.2.1) — fazer na Fase 7.
+- Alinhar a versão do `react-router-dom` no `portal-shell` (este repo instalou 7.18.4; o core deve compartilhar a mesma versão).
 
 ## Armadilhas aprendidas (reviews)
 - Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
@@ -127,6 +137,9 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Sonar: usar `.exec()` sobre **literal** de regex atende S6594 (prefer `exec` sobre `match`) e não aciona S7723 (que só pega `RegExp(...)` sem `new`); `new RegExp(/literal/)` é redundante. Array: preferir `.at(-1)` a `[length - 1]` (S7755).
 - O `eslint.config.js` **não** integra prettier → formatação (espaços extras, `;` faltando) não é pega no `npm run lint`; depende do prettier na IDE/`--write`.
 - `JSON.stringify(value, replacer?, space?)` tipa `string` (não `string | undefined`) na lib do TS 6 instalada — `?? ""` desnecessário.
+- Chamada solta de função que **retorna** algo (ex. `EditorView.contentAttributes.of({...})` fora do array de extensions) não tem efeito e **nenhuma regra pega**: tsc passa e o ESLint permite calls em `no-unused-expressions`. Revisar manualmente "expressões órfãs" que retornam extensões/effects.
+- `aria-label` num `<div>` sem role (ou em container externo) não gera nome acessível: no CM6 vai em `EditorView.contentAttributes` (o `contentDOM` tem `role="textbox"`). E o CM **já emite `aria-readonly="true"` sozinho** via `state.readOnly` — não adicionar manualmente.
+- Byte-equivalência exige `diff` real: o CLI do shadcn gera `index.css` em 4 espaços/aspas simples; o prettier (`tabWidth: 2`) normaliza para 2/aspas duplas. Repo sem `.prettierignore` ficou 2; o que tinha ignore ficou 4 — "mesmo conteúdo" não é byte-idêntico. Conferir sempre `diff` + `npx prettier --check`.
 
 ## Última atualização
-- 2026-10-12 · commit base: c4fa071 (Fase 0) · Fase 1 implementada e verificada, ainda **não commitada**
+- 2026-10-12 · commit base: 1a529e6 (Fase 1) · Fase 2 implementada e revisada, ainda **não commitada**
