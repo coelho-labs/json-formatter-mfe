@@ -15,7 +15,8 @@ import {
   indentWithTab,
 } from "@codemirror/commands";
 import { bracketMatching, indentOnInput } from "@codemirror/language";
-import { json } from "@codemirror/lang-json";
+import { json, jsonParseLinter } from "@codemirror/lang-json";
+import { linter } from "@codemirror/lint";
 import { codeEditorTheme } from "./theme.ts";
 
 const readOnlyCompartment = new Compartment();
@@ -30,6 +31,7 @@ type CodeEditorProps = {
   value: string;
   onChange?: (value: string) => void;
   readOnly?: boolean;
+  lintJson?: boolean;
   initialAriaLabel?: string;
   className?: string;
 };
@@ -38,6 +40,7 @@ export function CodeEditor({
   value,
   onChange,
   readOnly,
+  lintJson,
   initialAriaLabel,
   className,
 }: Readonly<CodeEditorProps>) {
@@ -46,6 +49,7 @@ export function CodeEditor({
   const onChangeRef = useRef(onChange);
   const [initialDoc] = useState(value);
   const [localInitialAriaLabel] = useState(initialAriaLabel);
+  const [localLintJson] = useState(lintJson);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -65,13 +69,14 @@ export function CodeEditor({
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       json(),
       codeEditorTheme,
+      ...(localLintJson ? [linter(jsonParseLinter())] : []),
       readOnlyCompartment.of([]),
-      EditorView.updateListener.of((u) => {
-        if (u.docChanged) onChangeRef.current?.(u.state.doc.toString());
-      }),
       EditorView.contentAttributes.of(
         localInitialAriaLabel ? { "aria-label": localInitialAriaLabel } : {},
       ),
+      EditorView.updateListener.of((u) => {
+        if (u.docChanged) onChangeRef.current?.(u.state.doc.toString());
+      }),
     ];
     const view = new EditorView({
       parent,
@@ -82,7 +87,7 @@ export function CodeEditor({
       view.destroy();
       viewRef.current = null;
     };
-  }, [initialDoc, localInitialAriaLabel]);
+  }, [initialDoc, localInitialAriaLabel, localLintJson]);
 
   useEffect(() => {
     viewRef.current?.dispatch({
