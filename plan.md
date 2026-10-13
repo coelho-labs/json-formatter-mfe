@@ -15,9 +15,9 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 1 | Núcleo puro `src/lib/json.ts` | ✅ | 1a529e6 |
 | 2 | Integração CodeMirror (theme + CodeEditor) | ✅ | 2400e19 |
 | 3 | Ferramenta núcleo em texto | ✅ | 618343a |
-| 4 | Extras puros (sort/escape/unescape) | ✅ | d146e4f |
+| 4 | Extras puros (sort/escape/unescape) | ✅ | 92aecf8 |
 | 5 | Tree view | ✅ | d146e4f |
-| 6 | Upload / Drag & Drop | ⬜ | — |
+| 6 | Upload / Drag & Drop | ✅ | 7554d68 |
 | 7 | Docs + a11y/responsivo + .env.example | ⬜ | — |
 | 8 | Verificação de integração final | ⬜ | — |
 
@@ -134,8 +134,28 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; smoke (format/minify/validate/copy/download/clear, indent 2/4/tab, `.dark`). Commits 4030ee4/d3f3882/618343a + docs.
 - Em aberto: `validate()` **não** limpa a Saída (validar não produz saída — staleness possível); lint inline marca o input vazio (squiggle) — mantido por ora.
 
+### 2026-10-13 — Fase 4 concluída (extras puros)
+
+- Entregue: `sortJsonKeys`/`escapeJson`/`unescapeJson` em `lib/json.ts` + botões Ordenar/Escape/Unescape na Toolbar.
+- Semântica confirmada: escape = `JSON.stringify(texto)` (literal escapado); unescape = `JSON.parse` de string literal → conteúdo.
+- Commits: 88d47ab (fix refresh), 92aecf8 (feat), b3cd3e7 (docs).
+
+### 2026-10-13 — Fase 5 concluída (tree view)
+
+- Entregue: `JsonTreeView.tsx` (colapsável) + toggle Texto/Árvore (`view` no hook; `treeValue` via `JSON.parse`; `effectiveView` força "text" quando não há saída/erro).
+- Fix: botão Árvore desabilitado sem saída (04c8ab5).
+- Commits: d146e4f, 04c8ab5.
+
+### 2026-10-13 — Fase 6 concluída (upload / drag & drop)
+
+- Entregue: `loadFile(file)` **async** no hook (`await` em `try/catch`); estado `fileError` (limpo em `setInput`/`validate`/`clear`); `JsonInput` com drop zone (`onDragOver`/`onDragLeave`/`onDrop` + realce via `cn`), `<input type="file" hidden>` acionado por `Button`/ref + label, `Badge destructive` para erro; `Tool.page` propaga `onLoadFile`/`fileError`.
+- Decisões: leitura **leniente** (não valida tipo — lint/Validar sinalizam); acesso ao input via `ref` (foco no botão); overlay "Solte o arquivo aqui" com `pointer-events-none`, renderizado **depois** do editor.
+- React Compiler: removido o `useMemo` de `treeValue` (memoização automática).
+- Correções de review: `??`→`&&` no overlay; import `cn` corrigido para `@/lib/utils`; tooltip do Escape no Toolbar; guard do `dragleave` por `relatedTarget`.
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` + smoke (drop, seleção, teclado, re-seleção).
+- Commit: 7554d68.
+
 ## Pendências / pontos abertos
-- Confirmar semântica de escape/unescape (acima está provisória).
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
 - Alinhar a versão do `react-router-dom` no `portal-shell` (este repo instalou 7.18.4; o core deve compartilhar a mesma versão).
 
@@ -150,6 +170,9 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Byte-equivalência exige `diff` real: o CLI do shadcn gera `index.css` em 4 espaços/aspas simples; o prettier (`tabWidth: 2`) normaliza para 2/aspas duplas. Repo sem `.prettierignore` ficou 2; o que tinha ignore ficou 4 — "mesmo conteúdo" não é byte-idêntico. Conferir sempre `diff` + `npx prettier --check`.
 - ESLint/tsc não pegam lógica booleana invertida: `value.trim()! == ""` (o `!` non-null e o `==` solto) compila e passa no lint; o bug só aparece em runtime. Revisar comparações à mão.
 - Nome de pasta vs import diverge e só falha no typecheck: `hook/` (singular) com import `./hooks/useJsonFormatter.ts` → TS2307; manter a pasta alinhada ao contrato (`hooks/` plural).
+- `{flag ?? (<jsx/>)}` com `flag: boolean` **nunca renderiza**: `??` só decide em `null`/`undefined`, e o React ignora `true`/`false` como children. Nem tsc nem ESLint (sem `no-unnecessary-condition`) acusam — usar `&&`.
+- Import com extensão errada (`@/lib/utils.tsx` para um `.ts`) só falha na resolução de módulo (TS2307/Vite): conferir a extensão real; `ui/*` importam `@/lib/utils` **sem** extensão.
+- Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-10-12 · commit base: 618343a (Fase 3) · Fase 3 implementada, revisada e commitada
+- 2026-10-13 · commit base: 7554d68 (Fase 6) · Fases 4–6 implementadas, revisadas e commitadas
