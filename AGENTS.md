@@ -29,7 +29,6 @@ Regras de manutenção:
 - Status de implementação NUNCA no AGENTS.md — sempre no plan.md.
 - Precedência de contexto: o AGENTS.md deste repo vence o `../AGENTS.md` da raiz `coelho-labs` (desatualizado).
 
-
 ## Regras de Restrição
 
 - NÃO escrever ou editar arquivos de código diretamente; A não ser que explicitamente pedido, mesmo assim avisar antes.
@@ -43,7 +42,6 @@ Regras de manutenção:
 - NÃO otimizar componentes manualmente com useMemo/useCallback a não ser que estritamente necessário (React Compiler está ativo).
 - NÃO usar CSS Modules ou estilos globais que possam vazar para o host (usar estritamente Tailwind/Shadcn).
 - Respeitar rigorosamente o contrato do MFE (entrada única ./RemoteAppEntry, roteamento relativo, tema duplicado) e a hierarquia de boas práticas: 1. Contratos de Arquitetura do Host/MFE; 2. Boas práticas do React 19/TS 6; 3. Boas práticas do Tailwind v4/Shadcn; 4. Clean Code. Sempre verificar o uso dessas boas práticas, a não ser que explicitamente justificado.
-- Sempre verificar o uso de boas práticas, a não ser que explicitamente justificado
 
 ## Descrição
 
@@ -168,7 +166,7 @@ O Core/Host é o dono do tema (toggle em portal-shell, chave coelho-theme, class
     - components/ — JsonInput (CodeMirror editável + drag&drop), JsonOutput (CodeMirror read-only + toggle Texto/Árvore), JsonTreeView, Toolbar. Um subcomponente interno pode morar no mesmo arquivo (padrão do ecossistema).
     - Tool.page.tsx — render puro consumindo useJsonFormatter.
 - src/lib/json.ts — funções puras (formatJson, minifyJson, validateJson, sortJsonKeys, escapeJson, unescapeJson) sem I/O.
-- src/components/code-editor/ — CodeEditor.tsx (wrapper CM6) + theme.ts (tema por tokens do design system).
+- src/components/code-editor/ — CodeEditor.tsx (wrapper CM6: props value/onChange/readOnly/lintJson/initialAriaLabel/className; lintJson liga `linter(jsonParseLinter())` nas extensions) + theme.ts (tema por tokens do design system).
 - src/components/ui/\*: componentes shadcn/base-nova usados (button, card, badge, label, select, separator, tooltip); textarea não é usado (editor é CodeMirror).
 - src/lib/utils.ts — cn().
 - Estilização: 100% shadcn/ui + utilities Tailwind. Não usar CSS Modules, ids globais nem var(--accent) de starters antigos — o CSS do remote é injetado no host, então estilos globais vazam/colidem com o portal-shell.
@@ -188,3 +186,4 @@ O Core/Host é o dono do tema (toggle em portal-shell, chave coelho-theme, class
 - Estados visuais que precisam coexistir devem operar em grupos distintos do cn: quando dois sinais mexem nos mesmos grupos (border/bg/text), o tailwind-merge mantém só a última classe. Cada sinal deve ter eixo próprio (fundo vs. borda vs. texto vs. ícone vs. outline) — nunca disputam prioridade.
 - Importar wrapper shadcn, não a primitive Base UI: @/components/ui/button aplica buttonVariants; a primitive crua @base-ui/react/button renderiza sem estilo (sem bg-primary/padding).
 - Tema por duplicação idêntica: qualquer token só deve mudar no portal-shell/src/index.css, nunca aqui (ver seção de Tema).
+- Tooltip (Base UI): o gatilho recebe o elemento via `render` (não existe `asChild`) — ex.: `<TooltipTrigger render={<Button…/>} />`. `TooltipProvider` é **opcional** (agrupa delay; sem ele o Trigger cai no `OPEN_DELAY` do Base UI). Gatilho desabilitado (botão `disabled` nativo) não dispara eventos de ponteiro → **não abre** o tooltip; para dica em estado desabilitado, use um `<span>` como gatilho.

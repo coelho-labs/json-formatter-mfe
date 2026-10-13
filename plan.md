@@ -14,7 +14,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 0 | Saneamento e base navegável | ✅ | c4fa071 |
 | 1 | Núcleo puro `src/lib/json.ts` | ✅ | 1a529e6 |
 | 2 | Integração CodeMirror (theme + CodeEditor) | ✅ | 2400e19 |
-| 3 | Ferramenta núcleo em texto | ⬜ | — |
+| 3 | Ferramenta núcleo em texto | ✅ | 618343a |
 | 4 | Extras puros (sort/escape/unescape) | ⬜ | — |
 | 5 | Tree view | ⬜ | — |
 | 6 | Upload / Drag & Drop | ⬜ | — |
@@ -126,6 +126,14 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Revisões aplicadas: removido `lineNumbers()` duplicado; `contentAttributes.of(...)` estava como **expressão solta** (fora do array de extensions — label morto, e nem eslint/tsc pegam) e foi movido para o array; `Tool.page` com `w-full` nos wrappers (senão `items-center` colapsava os editores); import com extensão `.tsx`.
 - Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; `npx prettier --check` limpo nos arquivos novos; `diff` dos 3 `index.css` vazio. Commitada em 88b0d57 (deps CM) + b016715 (tokens) + 4d21724 (CodeEditor) + 2400e19 (docs).
 
+### 2026-10-12 — Fase 3 implementada e revisada (ferramenta núcleo em texto)
+
+- Entregue: `pages/tool/hooks/useJsonFormatter.ts` (estado + ações format/minify/validate/copy/download/clear/setInput); `components/{Toolbar,JsonInput,JsonOutput}.tsx`; `Tool.page.tsx` composto; UI `{label,select,separator,tooltip}.tsx` copiada; `CodeEditor` ganhou o prop `lintJson`.
+- Decisões: `copyStatus` auto-reseta a "idle" em 2s (useEffect + clearTimeout); `format`/`minify` em erro limpam a Saída (`setOutput("")`) para não exibir resultado stale; tooltips Base UI nos botões (`TooltipProvider` + `TooltipTrigger render={<Button/>}`).
+- Revisões aplicadas: pasta `hook/`→`hooks/` (o import de `Tool.page` quebrava o tsc, TS2307); prop `lintJson` ausente no `CodeEditor` (TS2322); `toIndentOption(v ?? "2")` (Base UI Select entrega `string | null`); `JsonOutput` com lógica invertida `value.trim() !== ""`; `FormatStatus` deduplicado (só no hook); imports com extensão; `Readonly<JsonInputProps>`.
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; smoke (format/minify/validate/copy/download/clear, indent 2/4/tab, `.dark`). Commits 4030ee4/d3f3882/618343a + docs.
+- Em aberto: `validate()` **não** limpa a Saída (validar não produz saída — staleness possível); lint inline marca o input vazio (squiggle) — mantido por ora.
+
 ## Pendências / pontos abertos
 - Confirmar semântica de escape/unescape (acima está provisória).
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
@@ -140,6 +148,8 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Chamada solta de função que **retorna** algo (ex. `EditorView.contentAttributes.of({...})` fora do array de extensions) não tem efeito e **nenhuma regra pega**: tsc passa e o ESLint permite calls em `no-unused-expressions`. Revisar manualmente "expressões órfãs" que retornam extensões/effects.
 - `aria-label` num `<div>` sem role (ou em container externo) não gera nome acessível: no CM6 vai em `EditorView.contentAttributes` (o `contentDOM` tem `role="textbox"`). E o CM **já emite `aria-readonly="true"` sozinho** via `state.readOnly` — não adicionar manualmente.
 - Byte-equivalência exige `diff` real: o CLI do shadcn gera `index.css` em 4 espaços/aspas simples; o prettier (`tabWidth: 2`) normaliza para 2/aspas duplas. Repo sem `.prettierignore` ficou 2; o que tinha ignore ficou 4 — "mesmo conteúdo" não é byte-idêntico. Conferir sempre `diff` + `npx prettier --check`.
+- ESLint/tsc não pegam lógica booleana invertida: `value.trim()! == ""` (o `!` non-null e o `==` solto) compila e passa no lint; o bug só aparece em runtime. Revisar comparações à mão.
+- Nome de pasta vs import diverge e só falha no typecheck: `hook/` (singular) com import `./hooks/useJsonFormatter.ts` → TS2307; manter a pasta alinhada ao contrato (`hooks/` plural).
 
 ## Última atualização
-- 2026-10-12 · commit base: 2400e19 (Fase 2) · Fase 2 commitada e verificada
+- 2026-10-12 · commit base: 618343a (Fase 3) · Fase 3 implementada, revisada e commitada
