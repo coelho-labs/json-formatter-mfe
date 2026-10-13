@@ -56,6 +56,29 @@ function parseJson(input: string): ParseOutcome {
   }
 }
 
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sortKeysDeep(item));
+  }
+  if (value !== null && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj).sort((a, b) => a.localeCompare(b));
+    const result: Record<string, unknown> = {};
+    for (const k of keys) {
+      result[k] = sortKeysDeep(obj[k]);
+    }
+    return result;
+  }
+  return value;
+}
+
+export function sortJsonKeys(input: string, indent: IndentOption): JsonResult {
+  const outcome = parseJson(input);
+  if (!outcome.ok) return outcome;
+  const sorted = sortKeysDeep(outcome.value);
+  return { ok: true, value: JSON.stringify(sorted, null, indent) };
+}
+
 export function validateJson(input: string): JsonResult {
   const outcome = parseJson(input);
   if (!outcome.ok) return outcome;
@@ -72,4 +95,32 @@ export function minifyJson(input: string): JsonResult {
   const outcome = parseJson(input);
   if (!outcome.ok) return outcome;
   return { ok: true, value: JSON.stringify(outcome.value) };
+}
+
+export function escapeJson(input: string): JsonResult {
+  return { ok: true, value: JSON.stringify(input) };
+}
+
+export function unescapeJson(input: string): JsonResult {
+  try {
+    const parsed = JSON.parse(input);
+    if (typeof parsed !== "string") {
+      return {
+        ok: false,
+        error: {
+          message: "Input is not a valid JSON string literal",
+          position: -1,
+          line: -1,
+          column: -1,
+        },
+      };
+    }
+    return { ok: true, value: parsed };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      error: { message, ...locateError(input, message) },
+    };
+  }
 }

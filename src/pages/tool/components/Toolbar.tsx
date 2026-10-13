@@ -1,11 +1,14 @@
 import { useId } from "react";
 import {
+  ArrowUpDown,
   Braces,
   CircleCheck,
   Copy,
   Download,
   Minimize2,
+  Quote,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import type { IndentOption, JsonError } from "@/lib/json.ts";
 import { Badge } from "@/components/ui/badge.tsx";
@@ -48,35 +51,41 @@ function formatError(error: JsonError): string {
 }
 
 type ToolbarProps = {
-  indent: IndentOption;
-  onIndentChange: (indent: IndentOption) => void;
-  hasInput: boolean;
-  hasOutput: boolean;
   copyStatus: FormatStatus;
   error: JsonError | null;
+  hasInput: boolean;
+  hasOutput: boolean;
+  indent: IndentOption;
   validated: boolean | null;
-  onFormat: () => void;
-  onMinify: () => void;
-  onValidate: () => void;
+  escape: () => void;
+  onClear: () => void;
   onCopy: () => void;
   onDownload: () => void;
-  onClear: () => void;
+  onFormat: () => void;
+  onIndentChange: (indent: IndentOption) => void;
+  onMinify: () => void;
+  onValidate: () => void;
+  sortKeys: () => void;
+  unescape: () => void;
 };
 
 export function Toolbar({
-  indent,
-  onIndentChange,
-  hasInput,
-  hasOutput,
   copyStatus,
   error,
+  hasInput,
+  hasOutput,
+  indent,
   validated,
-  onFormat,
-  onMinify,
-  onValidate,
+  escape,
+  onClear,
   onCopy,
   onDownload,
-  onClear,
+  onFormat,
+  onIndentChange,
+  onMinify,
+  onValidate,
+  sortKeys,
+  unescape,
 }: Readonly<ToolbarProps>) {
   const selectId = useId();
   return (
@@ -115,6 +124,24 @@ export function Toolbar({
               Embelezar com a indentação escolhida
             </TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={sortKeys}
+                  disabled={!hasInput}
+                >
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  Ordenar chaves
+                </Button>
+              }
+            ></TooltipTrigger>
+            <TooltipContent>Ordena chaves A–Z recursivamente</TooltipContent>
+          </Tooltip>
+
           <Tooltip>
             <TooltipTrigger
               render={
@@ -130,6 +157,45 @@ export function Toolbar({
             />
             <TooltipContent>Remover espaços e quebras de linha</TooltipContent>
           </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={escape}
+                  disabled={!hasInput}
+                >
+                  <Quote className="mr-2 h-4 w-4" />
+                  Escape
+                </Button>
+              }
+            />
+            <TooltipContent>
+              Escapa texto para literal JSON (JSON.stringify)” — curto e claro.
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={unescape}
+                  disabled={!hasInput}
+                >
+                  <Undo2 className="mr-2 h-4 w-4" />
+                  Unescape
+                </Button>
+              }
+            />
+            <TooltipContent>
+              Converte string literal JSON → conteúdo
+            </TooltipContent>
+          </Tooltip>
+
           <Tooltip>
             <TooltipTrigger
               render={

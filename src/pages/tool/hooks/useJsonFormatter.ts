@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import type { IndentOption, JsonError, JsonResult } from "@/lib/json.ts";
-import { formatJson, minifyJson, validateJson } from "@/lib/json.ts";
+import {
+  escapeJson,
+  formatJson,
+  minifyJson,
+  sortJsonKeys,
+  unescapeJson,
+  validateJson,
+} from "@/lib/json.ts";
 
 export type FormatStatus = "idle" | "copied" | "error";
 
@@ -41,6 +48,12 @@ export function useJsonFormatter(initialInput = "") {
   const format = () => handleTransform(formatJson(input, indent));
 
   const minify = () => handleTransform(minifyJson(input));
+
+  const sortKeys = () => handleTransform(sortJsonKeys(input, indent));
+
+  const escape = () => handleTransform(escapeJson(input));
+
+  const unescape = () => handleTransform(unescapeJson(input));
 
   const validate = () => {
     const result = validateJson(input);
@@ -83,21 +96,24 @@ export function useJsonFormatter(initialInput = "") {
   const hasOutput = output.trim() !== "";
 
   return {
-    input,
-    setInput,
-    indent,
-    setIndent,
-    output,
-    error,
-    validated,
     copyStatus,
+    error,
     hasInput,
     hasOutput,
-    format,
-    minify,
-    validate,
+    indent,
+    input,
+    output,
+    validated,
+    clear,
     copy,
     download,
-    clear,
+    escape,
+    format,
+    minify,
+    setIndent,
+    setInput,
+    sortKeys,
+    unescape,
+    validate,
   };
 }

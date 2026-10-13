@@ -35,19 +35,22 @@ export default function Tool() {
       </div>
 
       <Toolbar
-        indent={formatter.indent}
-        onIndentChange={formatter.setIndent}
-        hasInput={formatter.hasInput}
-        hasOutput={formatter.hasOutput}
         copyStatus={formatter.copyStatus}
         error={formatter.error}
-        validated={formatter.validated}
-        onFormat={formatter.format}
-        onMinify={formatter.minify}
-        onValidate={formatter.validate}
+        escape={formatter.escape}
+        hasInput={formatter.hasInput}
+        hasOutput={formatter.hasOutput}
+        indent={formatter.indent}
+        onClear={formatter.clear}
         onCopy={formatter.copy}
         onDownload={formatter.download}
-        onClear={formatter.clear}
+        onFormat={formatter.format}
+        onIndentChange={formatter.setIndent}
+        onMinify={formatter.minify}
+        onValidate={formatter.validate}
+        sortKeys={formatter.sortKeys}
+        unescape={formatter.unescape}
+        validated={formatter.validated}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
