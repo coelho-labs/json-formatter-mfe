@@ -4,6 +4,7 @@ import { useJsonFormatter } from "./hooks/useJsonFormatter.ts";
 import { JsonInput } from "./components/JsonInput.tsx";
 import { JsonOutput } from "./components/JsonOutput.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
+import { JsonTreeView } from "./components/JsonTreeView.tsx";
 
 const INITIAL = `{
   "hello": "world",
@@ -35,6 +36,7 @@ export default function Tool() {
       </div>
 
       <Toolbar
+        canShowTree={formatter.canShowTree}
         copyStatus={formatter.copyStatus}
         error={formatter.error}
         escape={formatter.escape}
@@ -48,14 +50,31 @@ export default function Tool() {
         onIndentChange={formatter.setIndent}
         onMinify={formatter.minify}
         onValidate={formatter.validate}
+        setView={formatter.setView}
         sortKeys={formatter.sortKeys}
         unescape={formatter.unescape}
         validated={formatter.validated}
+        view={formatter.view}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <JsonInput value={formatter.input} onChange={formatter.setInput} />
-        <JsonOutput value={formatter.output} />
+        {formatter.view === "text" ? (
+          <JsonOutput value={formatter.output} />
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium">Árvore (leitura)</h2>
+            </div>
+            {formatter.treeValue !== null ? (
+              <JsonTreeView value={formatter.treeValue} className="h-[420px]" />
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Nada para exibir
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

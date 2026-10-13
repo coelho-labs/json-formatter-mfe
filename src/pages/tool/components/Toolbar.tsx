@@ -5,8 +5,10 @@ import {
   CircleCheck,
   Copy,
   Download,
+  ListTree,
   Minimize2,
   Quote,
+  Type,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -51,12 +53,14 @@ function formatError(error: JsonError): string {
 }
 
 type ToolbarProps = {
+  canShowTree: boolean;
   copyStatus: FormatStatus;
   error: JsonError | null;
   hasInput: boolean;
   hasOutput: boolean;
   indent: IndentOption;
   validated: boolean | null;
+  view: "text" | "tree";
   escape: () => void;
   onClear: () => void;
   onCopy: () => void;
@@ -65,17 +69,20 @@ type ToolbarProps = {
   onIndentChange: (indent: IndentOption) => void;
   onMinify: () => void;
   onValidate: () => void;
+  setView: (v: "text" | "tree") => void;
   sortKeys: () => void;
   unescape: () => void;
 };
 
 export function Toolbar({
+  canShowTree,
   copyStatus,
   error,
   hasInput,
   hasOutput,
   indent,
   validated,
+  view,
   escape,
   onClear,
   onCopy,
@@ -84,6 +91,7 @@ export function Toolbar({
   onIndentChange,
   onMinify,
   onValidate,
+  setView,
   sortKeys,
   unescape,
 }: Readonly<ToolbarProps>) {
@@ -213,6 +221,32 @@ export function Toolbar({
           </Tooltip>
 
           <Separator orientation="vertical" className="h-5" />
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setView(view === "text" ? "tree" : "text")}
+                  disabled={!canShowTree && view === "text"}
+                  aria-pressed={view === "tree"}
+                />
+              }
+            >
+              {view === "text" ? (
+                <ListTree className="mr-2 h-4 w-4" />
+              ) : (
+                <Type className="mr-2 h-4 w-4" />
+              )}
+              {view === "text" ? "Árvore" : "Texto"}
+            </TooltipTrigger>
+            <TooltipContent>
+              {view === "text"
+                ? "Ver em árvore colapsável"
+                : "Ver em modo texto"}
+            </TooltipContent>
+          </Tooltip>
 
           <Tooltip>
             <TooltipTrigger

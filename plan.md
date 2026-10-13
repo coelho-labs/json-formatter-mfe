@@ -15,8 +15,8 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 1 | Núcleo puro `src/lib/json.ts` | ✅ | 1a529e6 |
 | 2 | Integração CodeMirror (theme + CodeEditor) | ✅ | 2400e19 |
 | 3 | Ferramenta núcleo em texto | ✅ | 618343a |
-| 4 | Extras puros (sort/escape/unescape) | ⬜ | — |
-| 5 | Tree view | ⬜ | — |
+| 4 | Extras puros (sort/escape/unescape) | ✅ | a49f50e |
+| 5 | Tree view | ✅ | a49f50e |
 | 6 | Upload / Drag & Drop | ⬜ | — |
 | 7 | Docs + a11y/responsivo + .env.example | ⬜ | — |
 | 8 | Verificação de integração final | ⬜ | — |

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { IndentOption, JsonError, JsonResult } from "@/lib/json.ts";
 import {
   escapeJson,
@@ -12,12 +12,13 @@ import {
 export type FormatStatus = "idle" | "copied" | "error";
 
 export function useJsonFormatter(initialInput = "") {
-  const [input, setInputState] = useState(initialInput);
+  const [inputState, setInputState] = useState(initialInput);
   const [indent, setIndent] = useState<IndentOption>(2);
   const [output, setOutput] = useState("");
   const [error, setError] = useState<JsonError | null>(null);
   const [validated, setValidated] = useState<boolean | null>(null);
   const [copyStatus, setCopyStatus] = useState<FormatStatus>("idle");
+  const [view, setView] = useState<"text" | "tree">("text");
 
   useEffect(() => {
     if (copyStatus === "idle") return;
@@ -45,18 +46,18 @@ export function useJsonFormatter(initialInput = "") {
     setCopyStatus("idle");
   };
 
-  const format = () => handleTransform(formatJson(input, indent));
+  const format = () => handleTransform(formatJson(inputState, indent));
 
-  const minify = () => handleTransform(minifyJson(input));
+  const minify = () => handleTransform(minifyJson(inputState));
 
-  const sortKeys = () => handleTransform(sortJsonKeys(input, indent));
+  const sortKeys = () => handleTransform(sortJsonKeys(inputState, indent));
 
-  const escape = () => handleTransform(escapeJson(input));
+  const escape = () => handleTransform(escapeJson(inputState));
 
-  const unescape = () => handleTransform(unescapeJson(input));
+  const unescape = () => handleTransform(unescapeJson(inputState));
 
   const validate = () => {
-    const result = validateJson(input);
+    const result = validateJson(inputState);
     setValidated(result.ok);
     setError(result.ok ? null : result.error);
     setCopyStatus("idle");
@@ -92,18 +93,42 @@ export function useJsonFormatter(initialInput = "") {
     setCopyStatus("idle");
   };
 
-  const hasInput = input.trim() !== "";
+  const hasInput = inputState.trim() !== "";
   const hasOutput = output.trim() !== "";
 
+  const treeValue = useMemo<unknown>(() => {
+    if (!hasOutput) return null;
+    try {
+      return JSON.parse(output);
+    } catch {
+      return null;
+    }
+  }, [output, hasOutput]);
+
+  const canShowTree = view === "tree" && treeValue !== null && !error;
+
+  const effectiveView =
+    (error || !hasOutput) && view === "tree" ? "text" : view;
+  useEffect(() => {
+    if (effectiveView !== view) {
+      queueMicrotask(() => {
+        setView(effectiveView);
+      });
+    }
+  }, [effectiveView, view]);
+
   return {
+    canShowTree,
     copyStatus,
     error,
     hasInput,
     hasOutput,
     indent,
-    input,
+    input: inputState,
     output,
+    treeValue,
     validated,
+    view: effectiveView,
     clear,
     copy,
     download,
@@ -112,6 +137,7 @@ export function useJsonFormatter(initialInput = "") {
     minify,
     setIndent,
     setInput,
+    setView,
     sortKeys,
     unescape,
     validate,
