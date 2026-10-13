@@ -105,7 +105,7 @@ export function useJsonFormatter(initialInput = "") {
     }
   }, [output, hasOutput]);
 
-  const canShowTree = view === "tree" && treeValue !== null && !error;
+  const canShowTree = treeValue !== null && !error;
 
   const effectiveView =
     (error || !hasOutput) && view === "tree" ? "text" : view;
