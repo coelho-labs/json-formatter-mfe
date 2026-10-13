@@ -13,7 +13,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | ---- | --------- | ------ | ------ |
 | 0 | Saneamento e base navegável | ✅ | c4fa071 |
 | 1 | Núcleo puro `src/lib/json.ts` | ✅ | 1a529e6 |
-| 2 | Integração CodeMirror (theme + CodeEditor) | 🟨 | (a commitar) |
+| 2 | Integração CodeMirror (theme + CodeEditor) | ✅ | 2400e19 |
 | 3 | Ferramenta núcleo em texto | ⬜ | — |
 | 4 | Extras puros (sort/escape/unescape) | ⬜ | — |
 | 5 | Tree view | ⬜ | — |
@@ -124,7 +124,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - `CodeEditor`: `readOnly` via **Compartment** (`reconfigure` no effect de `[readOnly]`; criação com deps `[initialDoc, initialAriaLabel]` — não recria a view nem perde o doc). `aria-label` via `EditorView.contentAttributes` (o `contentDOM` tem `role="textbox"`); `aria-label` num `<div>` sem role não gera nome acessível.
 - Decisão: UI `{label,select,separator,tooltip}` adiada para a **Fase 3** (o smoke não as requer).
 - Revisões aplicadas: removido `lineNumbers()` duplicado; `contentAttributes.of(...)` estava como **expressão solta** (fora do array de extensions — label morto, e nem eslint/tsc pegam) e foi movido para o array; `Tool.page` com `w-full` nos wrappers (senão `items-center` colapsava os editores); import com extensão `.tsx`.
-- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; `npx prettier --check` limpo nos arquivos novos; `diff` dos 3 `index.css` vazio. **Ainda não commitada**.
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; `npx prettier --check` limpo nos arquivos novos; `diff` dos 3 `index.css` vazio. Commitada em 88b0d57 (deps CM) + b016715 (tokens) + 4d21724 (CodeEditor) + 2400e19 (docs).
 
 ## Pendências / pontos abertos
 - Confirmar semântica de escape/unescape (acima está provisória).
@@ -142,4 +142,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Byte-equivalência exige `diff` real: o CLI do shadcn gera `index.css` em 4 espaços/aspas simples; o prettier (`tabWidth: 2`) normaliza para 2/aspas duplas. Repo sem `.prettierignore` ficou 2; o que tinha ignore ficou 4 — "mesmo conteúdo" não é byte-idêntico. Conferir sempre `diff` + `npx prettier --check`.
 
 ## Última atualização
-- 2026-10-12 · commit base: 1a529e6 (Fase 1) · Fase 2 implementada e revisada, ainda **não commitada**
+- 2026-10-12 · commit base: 2400e19 (Fase 2) · Fase 2 commitada e verificada

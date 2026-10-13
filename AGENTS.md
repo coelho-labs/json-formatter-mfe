@@ -29,6 +29,7 @@ Regras de manutenção:
 - Status de implementação NUNCA no AGENTS.md — sempre no plan.md.
 - Precedência de contexto: o AGENTS.md deste repo vence o `../AGENTS.md` da raiz `coelho-labs` (desatualizado).
 
+
 ## Regras de Restrição
 
 - NÃO escrever ou editar arquivos de código diretamente; A não ser que explicitamente pedido, mesmo assim avisar antes.
@@ -42,6 +43,7 @@ Regras de manutenção:
 - NÃO otimizar componentes manualmente com useMemo/useCallback a não ser que estritamente necessário (React Compiler está ativo).
 - NÃO usar CSS Modules ou estilos globais que possam vazar para o host (usar estritamente Tailwind/Shadcn).
 - Respeitar rigorosamente o contrato do MFE (entrada única ./RemoteAppEntry, roteamento relativo, tema duplicado) e a hierarquia de boas práticas: 1. Contratos de Arquitetura do Host/MFE; 2. Boas práticas do React 19/TS 6; 3. Boas práticas do Tailwind v4/Shadcn; 4. Clean Code. Sempre verificar o uso dessas boas práticas, a não ser que explicitamente justificado.
+- Sempre verificar o uso de boas práticas, a não ser que explicitamente justificado
 
 ## Descrição
 
