@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { IndentOption, JsonError, JsonResult } from "@/lib/json.ts";
 import {
   escapeJson,
@@ -19,6 +19,7 @@ export function useJsonFormatter(initialInput = "") {
   const [validated, setValidated] = useState<boolean | null>(null);
   const [copyStatus, setCopyStatus] = useState<FormatStatus>("idle");
   const [view, setView] = useState<"text" | "tree">("text");
+  const [fileError, setFileError] = useState<string | null>(null);
 
   useEffect(() => {
     if (copyStatus === "idle") return;
@@ -31,6 +32,16 @@ export function useJsonFormatter(initialInput = "") {
     setValidated(null);
     setError(null);
     setCopyStatus("idle");
+    setFileError(null);
+  };
+
+  const loadFile = async (file: File) => {
+    try {
+      const text = await file.text();
+      setInput(text);
+    } catch {
+      setFileError("Não foi possível ler o arquivo.");
+    }
   };
 
   const handleTransform = (result: JsonResult) => {
@@ -62,6 +73,7 @@ export function useJsonFormatter(initialInput = "") {
     setError(result.ok ? null : result.error);
     setCopyStatus("idle");
     setOutput("");
+    setFileError(null);
   };
 
   const copy = async () => {
@@ -91,19 +103,20 @@ export function useJsonFormatter(initialInput = "") {
     setError(null);
     setValidated(null);
     setCopyStatus("idle");
+    setFileError(null);
   };
 
   const hasInput = inputState.trim() !== "";
   const hasOutput = output.trim() !== "";
 
-  const treeValue = useMemo<unknown>(() => {
-    if (!hasOutput) return null;
+  let treeValue: unknown = null;
+  if (hasOutput) {
     try {
-      return JSON.parse(output);
+      treeValue = JSON.parse(output);
     } catch {
-      return null;
+      treeValue = null;
     }
-  }, [output, hasOutput]);
+  }
 
   const canShowTree = treeValue !== null && !error;
 
@@ -121,6 +134,7 @@ export function useJsonFormatter(initialInput = "") {
     canShowTree,
     copyStatus,
     error,
+    fileError,
     hasInput,
     hasOutput,
     indent,
@@ -134,6 +148,7 @@ export function useJsonFormatter(initialInput = "") {
     download,
     escape,
     format,
+    loadFile,
     minify,
     setIndent,
     setInput,

@@ -58,7 +58,12 @@ export default function Tool() {
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <JsonInput value={formatter.input} onChange={formatter.setInput} />
+        <JsonInput
+          fileError={formatter.fileError}
+          value={formatter.input}
+          onChange={formatter.setInput}
+          onLoadFile={formatter.loadFile}
+        />
         {formatter.view === "text" ? (
           <JsonOutput value={formatter.output} />
         ) : (

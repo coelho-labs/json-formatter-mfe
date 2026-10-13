@@ -181,7 +181,7 @@ export function Toolbar({
               }
             />
             <TooltipContent>
-              Escapa texto para literal JSON (JSON.stringify)” — curto e claro.
+              Escapa texto para literal JSON (JSON.stringify)
             </TooltipContent>
           </Tooltip>
 
