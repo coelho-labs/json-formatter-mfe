@@ -18,8 +18,8 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 4 | Extras puros (sort/escape/unescape) | ✅ | 92aecf8 |
 | 5 | Tree view | ✅ | d146e4f |
 | 6 | Upload / Drag & Drop | ✅ | 7554d68 |
-| 7 | Docs + a11y/responsivo + .env.example | ⬜ | — |
-| 8 | Verificação de integração final | ⬜ | — |
+| 7 | Docs + a11y/responsivo + .env.example | ✅ | — |
+| 8 | Verificação de integração final | ✅ | — |
 
 ## Detalhamento das fases
 
@@ -155,9 +155,17 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` + smoke (drop, seleção, teclado, re-seleção).
 - Commit: 7554d68.
 
+### 2026-10-13 — Fases 7 e 8 concluídas (docs, integração e alinhamento cross-repo)
+
+- **Versões dos singletons alinhadas** em todo o ecossistema para `react`/`react-dom` 19.3.0 e `react-router-dom` 7.18.4: bump no `portal-shell`, no `json-formatter-mfe`, no `planning-poker-mfe` e no `content-delivery-mfe` (`react`/`react-dom`), com `npm install` nos quatro. Motivo: `requiredVersion` divergente entre singletons pode carregar **duas cópias de React** conforme a ordem de inicialização do share scope. Verificado com `npm ls` (19.3.0 / 7.18.4 nos quatro).
+- `shared` do json-formatter **padronizado** ao do core/planning-poker: removidos `react/jsx-runtime` e `react/jsx-dev-runtime` (o `jsx-runtime` resolve via `react` singleton; mantê-los só criava assimetria com os demais remotes).
+- **CORS no preview**: `preview.headers["Access-Control-Allow-Origin"] = "*"` nos três remotes, com a **porta de preview espelando a do dev** (4175/4176/4177, `strictPort`) — permite subir os três previews em paralelo e reaproveitar o mesmo `.env` do host em dev e build. Sem CORS, o host recebe `RUNTIME-001`/`Failed to get remoteEntry exports`.
+- **Docs reconciliados** com a convenção real do core: `AGENTS.md` e `README.md` passam a citar rota `/json-formatter/*` (era `/json/*`) e o registro do remote **estático** em `module-federation.config.ts` (era `registerRemotes` em runtime). AGENTS/README do comando de preview atualizados para 4177.
+- **Junk de lint no core**: `portal-shell/backup_node_modules/` (não rastreado) era varrido pelo ESLint e quebrava o `npm run lint` (um `eslint.config.js` interno requeria `neostandard`). Ignorado em `eslint.config.js` (`globalIgnores`) e no `.gitignore`.
+- **Verificação (Fase 8)**: `npm run lint` + `npm run build` verdes nos quatro repos; `diff ../portal-shell/src/index.css src/index.css` vazio; os três `mf-manifest.json` em preview respondem HTTP 200 com `Access-Control-Allow-Origin: *` e o chunk/remoteEntry acessíveis; `json-formatter:RemoteAppEntry` presente no manifest; o host sobe em dev (5173) sem erros e inclui o `loadRemote("json-formatter/RemoteAppEntry")`. Render visual no host é checagem manual (sem browser headless no ambiente).
+
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
-- Alinhar a versão do `react-router-dom` no `portal-shell` (este repo instalou 7.18.4; o core deve compartilhar a mesma versão).
 
 ## Armadilhas aprendidas (reviews)
 - Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
@@ -175,4 +183,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-10-13 · commit base: 7554d68 (Fase 6) · Fases 4–6 implementadas, revisadas e commitadas
+- 2026-10-13 · commit base: 7554d68 (Fase 6) · Fases 7–8 concluídas em working tree (docs, CORS preview, alinhamento de versões cross-repo e verificação de integração) — ainda não commitadas

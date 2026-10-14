@@ -56,7 +56,7 @@ O que NÃO pertence aqui:
 npm run dev # servidor dev (Vite, modo remote standalone)
 npm run build # tsc -b && vite build (typecheck faz parte do build)
 npm run lint # eslint .
-npm run preview # servidor de produção (porta 4173)
+npm run preview # servidor de produção (porta 4177, com CORS para o host)
 
 - Não há test runner nem suíte de testes.
 - Verificação padrão de uma mudança: npm run lint e npm run build.
@@ -75,15 +75,16 @@ npm run preview # servidor de produção (porta 4173)
     - Também existem: publicPath, manifest, bundleAllCSS, varFilename, hostInitInjectLocation.
 - Config atual: expõe ./RemoteAppEntry (src/RemoteAppEntry.tsx), filename: remoteEntry.js, manifest: true (gera mf-manifest.json + mf-stats.json), shared com react/react-dom/react-router-dom como singleton. O requiredVersion vem do package.json (evita drift de versão). Não há remotes (este módulo é só produtor).
 - Porta dev fixa: 4177 (strictPort). Em vite.config.ts, server.origin vem de VITE_ORIGIN (default http://localhost:4177) e base de VITE_BASE (build; exigir barra final, ex. https://cdn.coelho-labs.com/json-formatter/).
+- Preview: porta 4177 (mesma do dev, strictPort) com header `Access-Control-Allow-Origin: *` em `preview.headers` — sem CORS o host que consome a build recebe `RUNTIME-001`/`Failed to get remoteEntry exports`. Espelhar a porta do dev permite subir dev e preview dos três remotes em paralelo e reaproveitar o mesmo `.env` do host.
 - Remote entry: http://localhost:4177/remoteEntry.js (dev); manifest: http://localhost:4177/mf-manifest.json.
 
-##  Contrato com o portal-shell (dynamic remotes):
+##  Contrato com o portal-shell (remotes estáticos):
 
-- O core registra em runtime via @module-federation/runtime apontando para o manifest: registerRemotes([{ name: 'json-formatter', entry: 'http://localhost:4177/mf-manifest.json' }]).
-- Consome com loadRemote('json-formatter/RemoteAppEntry'), montado em <Route path="/json/*"> com <Suspense> (standalone usa /json-formatter/\*).
-- Não declarar o remote em remotes estático (mantém opcional e evita crash de boot com remote offline).
-- Compartilhar react/react-dom/react-router-dom como singleton: true no core e alinhar a versão do react-router-dom (7.18.4).
-- Dev: CORS coberto pelo Vite. Prod: servir remoteEntry + chunks no mesmo origin (reverse proxy/CDN); base da build via VITE_BASE.
+- O core registra o remote **estaticamente** em `module-federation.config.ts` na forma de objeto: `"json-formatter": { type: "module", name: "json-formatter", entry: env.VITE_JSON_FORMATTER_ENTRY ?? "http://localhost:4177/mf-manifest.json" }`. A chave (alias) DEVE ser igual ao `name`.
+- `entry` aponta para o `mf-manifest.json` (não `remoteEntry.js`): resolve `publicPath` + entry corretos em dev (`/remoteEntry.js`) e build/preview (`/assets/remoteEntry.js`).
+- Consome com `loadRemote` de `@module-federation/runtime` + `React.lazy`, montado em `<Route path="/json-formatter/*">` com `<Suspense>` — o MESMO prefixo usado no standalone (navegação é relativa, então o prefixo pode variar sem quebrar).
+- Manter `shared` em sincronia com o core: `react`, `react-dom`, `react-router-dom` como `singleton: true` com `requiredVersion` do `package.json`. Alinhar a versão instalada (hoje react/react-dom 19.3.0, react-router-dom 7.18.4 nos 3 remotes + core) — versões divergentes entre singletons podem carregar duas cópias de React.
+- Dev: CORS coberto pelo Vite. Build/preview: `Access-Control-Allow-Origin` em `preview.headers` (local) ou reverse proxy/CDN no mesmo origin (prod); base da build via VITE_BASE.
 - Convenção: todo MFE expõe ./RemoteAppEntry como chave de entrada padrão; o core sempre importa loadRemote('<nome>/RemoteAppEntry').
 - A lista de remotes (nome → URL) deve vir de um registry (ex: GET /api/mfe-registry) para plugar módulos novos sem rebuild do core.
 

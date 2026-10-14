@@ -26,16 +26,17 @@ npm install
 npm run dev      # servidor dev (Vite) — http://localhost:4177
 npm run build    # tsc -b && vite build (typecheck faz parte do build)
 npm run lint     # eslint .
-npm run preview  # servidor de produção (4173)
+npm run preview  # servidor de produção (4177, com CORS para o host)
 ```
 
 ## Contrato MFE
 
 - Remote name `json-formatter` · entrada `json-formatter/RemoteAppEntry` · manifest `http://localhost:4177/mf-manifest.json`.
-- Standalone: rotas sob `/json-formatter/*`; no host: `/json/*`.
-- `react`, `react-dom` e `react-router-dom` compartilhados como `singleton: true`.
+- Standalone: rotas sob `/json-formatter/*`; no host: `/json-formatter/*` (navegação relativa, o prefixo pode variar).
+- `react`, `react-dom` e `react-router-dom` compartilhados como `singleton: true` (alinhados a 19.3.0 / 7.18.4 nos três remotes e no core).
 - Tema por duplicação idêntica do `src/index.css` do `portal-shell` (não alterar tokens aqui).
 - Config: `VITE_ORIGIN` (dev, default `http://localhost:4177`) e `VITE_BASE` (build; barra final).
+- Preview local na porta 4177 com CORS liberado (`preview.headers`), permitindo a integração com o host em build.
 
 ## Documentação
 
