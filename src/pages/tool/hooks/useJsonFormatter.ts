@@ -93,8 +93,10 @@ export function useJsonFormatter(initialInput = "") {
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "json-formatted.json";
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   const clear = () => {
