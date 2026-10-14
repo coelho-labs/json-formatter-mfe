@@ -8,19 +8,15 @@ export type JsonTreeViewProps = {
 };
 
 type TreeNodeType =
-  | "array"
-  | "boolean"
-  | "null"
-  | "number"
-  | "object"
-  | "string";
+  "array" | "boolean" | "null" | "number" | "object" | "string";
 
 function getType(v: unknown): TreeNodeType {
   if (v === null) return "null";
   if (Array.isArray(v)) return "array";
   const t = typeof v;
   if (t === "string" || t === "number" || t === "boolean") return t;
-  return "object";
+  if (t === "object") return "object";
+  return "null";
 }
 
 function formatPrimitive(v: unknown, t: TreeNodeType): string {
@@ -29,13 +25,17 @@ function formatPrimitive(v: unknown, t: TreeNodeType): string {
   return String(v);
 }
 
+function childPath(path: string, key: string | number): string {
+  const token = String(key).replace(/~/g, "~0").replace(/\//g, "~1");
+  return `${path}/${token}`;
+}
+
 type NodeProps = {
   collapsed: Set<string>;
   expanded: boolean;
   label?: string;
   onToggle: (path: string) => void;
   path: string;
-  root?: boolean;
   value: unknown;
 };
 
@@ -51,13 +51,14 @@ function Node({
   if (t !== "object" && t !== "array") {
     return (
       <div className="ml-4 flex gap-1 text-sm font-mono">
-        {label !== undefined && <span className="text-blue-500">{label}:</span>}
+        {label !== undefined && (
+          <span className="text-[var(--syntax-property)]">{label}:</span>
+        )}
         <span
           className={cn(
-            t === "string" && "text-green-600 dark:text-green-400",
-            t === "number" && "text-yellow-600 dark:text-yellow-400",
-            (t === "boolean" || t === "null") &&
-              "text-purple-600 dark:text-purple-400",
+            t === "string" && "text-[var(--syntax-string)]",
+            t === "number" && "text-[var(--syntax-number)]",
+            (t === "boolean" || t === "null") && "text-[var(--syntax-literal)]",
           )}
         >
           {formatPrimitive(value, t)}
@@ -70,21 +71,24 @@ function Node({
     ? (value as unknown[])
     : Object.keys(value as Record<string, unknown>);
   const collapsedLabel = isArr
-    ? `[${entries.length} items]`
-    : `{${entries.length} keys}`;
+    ? `[${entries.length} itens]`
+    : `{${entries.length} chaves}`;
+  const nodeName = label ?? "raiz";
   if (!expanded) {
     return (
       <div className="ml-2 flex items-center gap-1 text-sm font-mono">
         <button
           type="button"
           aria-expanded={false}
-          aria-label="Expand"
+          aria-label={`Expandir ${nodeName}`}
           className="inline-flex h-4 w-4 items-center justify-center"
           onClick={() => onToggle(path)}
         >
           <ChevronRight className="h-3 w-3" />
         </button>
-        {label !== undefined && <span className="text-blue-500">{label}:</span>}
+        {label !== undefined && (
+          <span className="text-[var(--syntax-property)]">{label}:</span>
+        )}
         <span className="text-muted-foreground">{collapsedLabel}</span>
       </div>
     );
@@ -95,26 +99,28 @@ function Node({
         <button
           type="button"
           aria-expanded={true}
-          aria-label="Collapse"
+          aria-label={`Recolher ${nodeName}`}
           className="inline-flex h-4 w-4 items-center justify-center"
           onClick={() => onToggle(path)}
         >
           <ChevronDown className="h-3 w-3" />
         </button>
-        {label !== undefined && <span className="text-blue-500">{label}:</span>}
+        {label !== undefined && (
+          <span className="text-[var(--syntax-property)]">{label}:</span>
+        )}
         <span className="text-muted-foreground">{isArr ? "[" : "{"}</span>
       </div>
       <div className="ml-4">
         {isArr
           ? (value as unknown[]).map((item, i) => {
-              const childPath = `${path}[${i}]`;
+              const arrayChildPath = childPath(path, i);
               return (
                 <Node
-                  key={childPath}
+                  key={arrayChildPath}
                   value={item}
-                  path={childPath}
+                  path={arrayChildPath}
                   label={String(i)}
-                  expanded={!collapsed.has(childPath)}
+                  expanded={!collapsed.has(arrayChildPath)}
                   collapsed={collapsed}
                   onToggle={onToggle}
                 />
@@ -122,15 +128,15 @@ function Node({
             })
           : Object.keys(value as Record<string, unknown>).map((k) => {
               const obj = value as Record<string, unknown>;
-              const childPath = `${path}${path ? "." : ""}${k}`;
+              const objectChildPath = childPath(path, k);
               return (
                 <Node
                   collapsed={collapsed}
-                  expanded={!collapsed.has(childPath)}
-                  key={childPath}
+                  expanded={!collapsed.has(objectChildPath)}
+                  key={objectChildPath}
                   label={k}
                   onToggle={onToggle}
-                  path={childPath}
+                  path={objectChildPath}
                   value={obj[k]}
                 />
               );
@@ -165,7 +171,6 @@ export function JsonTreeView({
         expanded={!collapsed.has("")}
         onToggle={toggle}
         path=""
-        root
         value={value}
       />
     </div>

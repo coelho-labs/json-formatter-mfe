@@ -6,12 +6,10 @@ export type JsonError = {
   column: number;
 };
 export type JsonResult =
-  | { ok: true; value: string }
-  | { ok: false; error: JsonError };
+  { ok: true; value: string } | { ok: false; error: JsonError };
 
 type ParseOutcome =
-  | { ok: true; value: unknown }
-  | { ok: false; error: JsonError };
+  { ok: true; value: unknown } | { ok: false; error: JsonError };
 
 function deriveLocation(
   input: string,
