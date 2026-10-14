@@ -56,7 +56,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex flex-1 flex-col">
+        <main className="flex h-full flex-col">
           <Routes>
             <Route index element={<Navigate to="/json-formatter/" replace />} />
             <Route

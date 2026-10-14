@@ -21,13 +21,5 @@ export default createModuleFederationConfig({
       singleton: true,
       requiredVersion: dependencies["react-router-dom"],
     },
-    "react/jsx-runtime": {
-      singleton: true,
-      requiredVersion: dependencies["react"],
-    },
-    "react/jsx-dev-runtime": {
-      singleton: true,
-      requiredVersion: dependencies["react"],
-    },
   },
 });

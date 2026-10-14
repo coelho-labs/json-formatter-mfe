@@ -22,6 +22,13 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       origin,
     },
+    preview: {
+      port: 4177,
+      strictPort: true,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    },
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
