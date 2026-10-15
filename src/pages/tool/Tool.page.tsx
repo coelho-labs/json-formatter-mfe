@@ -6,15 +6,8 @@ import { JsonOutput } from "./components/JsonOutput.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { JsonTreeView } from "./components/JsonTreeView.tsx";
 
-const INITIAL = `{
-  "hello": "world",
-  "n": 42,
-  "ok": true,
-  "nothing": null
-}`;
-
 export default function Tool() {
-  const formatter = useJsonFormatter(INITIAL);
+  const formatter = useJsonFormatter();
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pt-8 pb-12">
       <div className="flex items-start gap-3">
