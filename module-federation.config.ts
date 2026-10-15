@@ -5,6 +5,7 @@ const { dependencies } = pkg;
 
 export default createModuleFederationConfig({
   name: "json-formatter",
+  publicPath: "auto", 
   filename: "remoteEntry.js",
   exposes: {
     "./RemoteAppEntry": "./src/RemoteAppEntry.tsx",
