@@ -58,14 +58,14 @@ export default function Home() {
     <div className="flex h-full flex-col">
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-4 px-4 pt-20 pb-12 text-center">
         <Badge variant="outline" className="uppercase tracking-wide">
-          Micro Frontend · Module Federation
+          UTILITÁRIO DEV · RÁPIDO & SEGURO
         </Badge>
         <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          JSON Formatter
+          Formatador e Validador JSON
         </h1>
         <p className="max-w-xl text-pretty text-muted-foreground">
-          Formate, minifique e valide JSON direto no navegador — servido como
-          módulo remoto do portal-shell.
+          Formate, minifique e valide dados JSON instantaneamente no navegador
+          com diagnóstico de erros e realce de sintaxe.
         </p>
         <Button
           size="lg"
@@ -94,10 +94,6 @@ export default function Home() {
           ))}
         </ul>
       </section>
-
-      <footer className="border-t border-border py-4 text-center text-sm text-muted-foreground">
-        Módulo remoto utilitário · Coelho Labs
-      </footer>
     </div>
   );
 }

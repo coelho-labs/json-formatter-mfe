@@ -56,25 +56,32 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex h-full flex-col">
-          <Routes>
-            <Route index element={<Navigate to="/json-formatter/" replace />} />
-            <Route
-              path="/json-formatter/*"
-              element={
-                <Suspense
-                  fallback={
-                    <p className="p-6 text-center text-muted-foreground">
-                      Carregando módulo...
-                    </p>
+        <div className="px-8 portal-shell-grid w-full flex-1 min-h-0 lg:min-h-[calc(100svh-7rem)] py-4">
+          <main className="relative flex flex-col min-w-0 w-full max-w-9xl mx-auto">
+            <div className="flex-1 min-h-0">
+              <Routes>
+                <Route
+                  index
+                  element={<Navigate to="/json-formatter/" replace />}
+                />
+                <Route
+                  path="/json-formatter/*"
+                  element={
+                    <Suspense
+                      fallback={
+                        <p className="p-6 text-center text-muted-foreground">
+                          Carregando módulo...
+                        </p>
+                      }
+                    >
+                      <RemoteAppEntry />
+                    </Suspense>
                   }
-                >
-                  <RemoteAppEntry />
-                </Suspense>
-              }
-            />
-          </Routes>
-        </main>
+                />
+              </Routes>
+            </div>
+          </main>
+        </div>
 
         <footer className="border-t border-border px-4 py-3 text-center text-sm text-muted-foreground">
           Shell de desenvolvimento — em produção este módulo é consumido pelo

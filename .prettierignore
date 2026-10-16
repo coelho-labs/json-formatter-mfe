@@ -8,3 +8,8 @@ components.json
 
 # Docs com tabelas/listas alinhadas à mão (prettier reflui markdown)
 *.md
+
+dist
+@mf-types
+.mf-types
+.dev-server
