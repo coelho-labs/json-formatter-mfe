@@ -51,7 +51,7 @@ export default function Tool() {
         view={formatter.view}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <JsonInput
           fileError={formatter.fileError}
           value={formatter.input}
