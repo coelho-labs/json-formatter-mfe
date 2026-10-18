@@ -56,7 +56,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
 export default function Home() {
   return (
     <div className="flex h-full flex-col">
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-4 px-4 pt-20 pb-12 text-center">
+      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-4 px-4 pt-4 pb-12 lg:pt-14 text-center">
         <Badge variant="outline" className="uppercase tracking-wide">
           UTILITÁRIO DEV · RÁPIDO & SEGURO
         </Badge>
@@ -69,7 +69,7 @@ export default function Home() {
         </p>
         <Button
           size="lg"
-          className="mt-2"
+          className="m-auto"
           render={<Link to="tool" relative="path" />}
         >
           Abrir ferramenta
