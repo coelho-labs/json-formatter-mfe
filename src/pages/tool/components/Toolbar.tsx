@@ -96,14 +96,17 @@ export function Toolbar({
   unescape,
 }: Readonly<ToolbarProps>) {
   const selectId = useId();
+  const buttomModeId = useId();
+
+  const indentToShow = indent === "\t" ? "Tab" : indent;
   return (
     <TooltipProvider>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex md:basis-3xs items-center gap-2">
             <Label htmlFor={selectId}>Indentação</Label>
             <Select
-              value={String(indent)}
+              value={String(indentToShow)}
               onValueChange={(v) => onIndentChange(toIndentOption(v ?? "2"))}
             >
               <SelectTrigger id={selectId} className="h-8">
@@ -119,11 +122,16 @@ export function Toolbar({
             </Select>
           </div>
 
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="md:hidden ml-auto h-5" />
           <Tooltip>
             <TooltipTrigger
               render={
-                <Button size="sm" disabled={!hasInput} onClick={onFormat}>
+                <Button
+                  size="sm"
+                  disabled={!hasInput}
+                  className="ml-auto"
+                  onClick={onFormat}
+                >
                   <Braces /> Formatar
                 </Button>
               }
@@ -131,6 +139,22 @@ export function Toolbar({
             <TooltipContent>
               Embelezar com a indentação escolhida
             </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!hasInput}
+                  onClick={onValidate}
+                >
+                  <CircleCheck /> Validar
+                </Button>
+              }
+            />
+            <TooltipContent>Checar a sintaxe e apontar o erro</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -204,50 +228,36 @@ export function Toolbar({
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={!hasInput}
-                  onClick={onValidate}
-                >
-                  <CircleCheck /> Validar
-                </Button>
-              }
-            />
-            <TooltipContent>Checar a sintaxe e apontar o erro</TooltipContent>
-          </Tooltip>
-
-          <Separator orientation="vertical" className="h-5" />
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setView(view === "text" ? "tree" : "text")}
-                  disabled={!canShowTree && view === "text"}
-                  aria-pressed={view === "tree"}
-                />
-              }
-            >
-              {view === "text" ? (
-                <ListTree className="mr-2 h-4 w-4" />
-              ) : (
-                <Type className="mr-2 h-4 w-4" />
-              )}
-              {view === "text" ? "Árvore" : "Texto"}
-            </TooltipTrigger>
-            <TooltipContent>
-              {view === "text"
-                ? "Ver em árvore colapsável"
-                : "Ver em modo texto"}
-            </TooltipContent>
-          </Tooltip>
-
+          <Separator orientation="vertical" className="md:hidden ml-auto h-5" />
+          <div className="flex md:basis-3xs items-center gap-2">
+            <Label htmlFor={buttomModeId}>Modo</Label>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    id={buttomModeId}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setView(view === "text" ? "tree" : "text")}
+                    disabled={!canShowTree && view === "text"}
+                    aria-pressed={view === "tree"}
+                  />
+                }
+              >
+                {view === "text" ? (
+                  <Type className="mr-2 h-4 w-4" />
+                ) : (
+                  <ListTree className="mr-2 h-4 w-4" />
+                )}
+                {view === "text" ? "Texto" : "Árvore"}
+              </TooltipTrigger>
+              <TooltipContent>
+                {view === "text"
+                  ? "Ver em árvore colapsável"
+                  : "Ver em modo texto"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <Tooltip>
             <TooltipTrigger
               render={
@@ -280,10 +290,16 @@ export function Toolbar({
             />
             <TooltipContent>Baixar como json-formatted.json</TooltipContent>
           </Tooltip>
+          <Separator orientation="vertical" className="md:hidden ml-auto h-5" />
           <Tooltip>
             <TooltipTrigger
               render={
-                <Button size="sm" variant="outline" onClick={onClear}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-auto text-destructive"
+                  onClick={onClear}
+                >
                   <Trash2 /> Limpar
                 </Button>
               }
