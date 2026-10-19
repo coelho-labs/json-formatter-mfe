@@ -103,7 +103,7 @@ export function Toolbar({
     <TooltipProvider>
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex md:basis-3xs items-center gap-2">
+          <div className="flex md:basis-3xs lg:basis-2xs items-center gap-2">
             <Label htmlFor={selectId}>Indentação</Label>
             <Select
               value={String(indentToShow)}
@@ -229,7 +229,7 @@ export function Toolbar({
           </Tooltip>
 
           <Separator orientation="vertical" className="md:hidden ml-auto h-5" />
-          <div className="flex md:basis-3xs items-center gap-2">
+          <div className="flex md:basis-3xs lg:basis-2xs items-center gap-2">
             <Label htmlFor={buttomModeId}>Modo</Label>
             <Tooltip>
               <TooltipTrigger

@@ -9,10 +9,10 @@ import { JsonTreeView } from "./components/JsonTreeView.tsx";
 export default function Tool() {
   const formatter = useJsonFormatter();
   return (
-    <section className="flex h-full flex-col w-full mx-auto max-w-5xl flex-1 flex-col gap-6 px-4 pb-12">
+    <section className="flex flex-1 flex-col w-full mx-auto gap-6 px-4 pb-12">
       <div className="flex flex-col items-start">
         <Link
-          to="../.."
+          to=".."
           relative="path"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
