@@ -56,7 +56,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col w-full">
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-4 px-4 pt-4 pb-12 lg:pt-14 text-center">
+      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center gap-4 px-4 pt-4 pb-8 lg:pt-14 text-center">
         <Badge variant="outline" className="uppercase tracking-wide">
           UTILITÁRIO DEV · RÁPIDO & SEGURO
         </Badge>
@@ -77,7 +77,7 @@ export default function Home() {
       </section>
 
       <section
-        className="mx-auto w-full max-w-5xl px-4 pb-16"
+        className="mx-auto w-full max-w-5xl px-4 pb-8"
         aria-labelledby="features-heading"
       >
         <h2
