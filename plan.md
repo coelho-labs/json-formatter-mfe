@@ -164,6 +164,14 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - **Junk de lint no core**: `portal-shell/backup_node_modules/` (não rastreado) era varrido pelo ESLint e quebrava o `npm run lint` (um `eslint.config.js` interno requeria `neostandard`). Ignorado em `eslint.config.js` (`globalIgnores`) e no `.gitignore`.
 - **Verificação (Fase 8)**: `npm run lint` + `npm run build` verdes nos quatro repos; `diff ../portal-shell/src/index.css src/index.css` vazio; os três `mf-manifest.json` em preview respondem HTTP 200 com `Access-Control-Allow-Origin: *` e o chunk/remoteEntry acessíveis; `json-formatter:RemoteAppEntry` presente no manifest; o host sobe em dev (5173) sem erros e inclui o `loadRemote("json-formatter/RemoteAppEntry")`. Render visual no host é checagem manual (sem browser headless no ambiente).
 
+### 2026-10-31 — Erros de parse traduzidos para pt-BR
+
+- Entregue: `translateJsonErrorMessage` em `src/lib/json.ts` (tabela de regras V8/Firefox/Safari + fallback `Erro de sintaxe no JSON`); `buildJsonError` centraliza mensagem traduzida + `locateError` sobre a mensagem crua; `parseJson`/`unescapeJson` usam o helper; lint inline do `CodeEditor` traduz os diagnósticos via wrapper de `linter`.
+- Decisão: `line`/`column`/`position` continuam sendo extraídos da mensagem **crua** da engine; traduzir antes quebraria `locateError`. A tradução é apenas de apresentação.
+- Cobertura: V8 (`Unexpected token`, `Unexpected end of JSON input`, `Expected double-quoted property name`, `Expected property name or '}'`, `Expected ':' after property name`, `Expected ',' or '}' after property value`, `Expected ',' or ']' after array element`, `Unterminated string`, `Bad escaped character`, `Bad control character`, `Unexpected non-whitespace character after JSON`), Firefox (`unexpected character`, `unexpected keyword or identifier`, `unexpected end of data`) e Safari (`Unexpected identifier`, `Unexpected EOF`, `Expected '}'`/`']'`, `Invalid character`, `Property name must be a string literal`). Fallback genérico garante pt-BR em mensagens não mapeadas.
+- Limitação: erros V8 de `Unexpected token`/`Unexpected end` não trazem offset; nesses casos a toolbar segue sem linha/coluna. Inferir posição exigiria parser estruturado — fora do escopo.
+- Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; smoke de `translateJsonErrorMessage` com mensagens reais do V8 (Node 24) e sintéticas de Firefox/Safari.
+
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
 
@@ -183,4 +191,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-10-13 · commit base: 7554d68 (Fase 6) · Fases 7–8 concluídas em working tree (docs, CORS preview, alinhamento de versões cross-repo e verificação de integração) — ainda não commitadas
+- 2026-10-31 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline) em working tree — ainda não commitado
