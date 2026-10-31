@@ -18,8 +18,18 @@ import { bracketMatching, indentOnInput } from "@codemirror/language";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import { codeEditorTheme } from "./theme.ts";
+import { translateJsonErrorMessage } from "@/lib/json.ts";
 
 const readOnlyCompartment = new Compartment();
+
+const parseJsonLint = jsonParseLinter();
+
+const jsonLint = linter((view) =>
+  parseJsonLint(view).map((diagnostic) => ({
+    ...diagnostic,
+    message: translateJsonErrorMessage(diagnostic.message),
+  })),
+);
 
 function readOnlyExtensions(readOnly: boolean): Extension {
   return readOnly
@@ -69,7 +79,7 @@ export function CodeEditor({
       keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
       json(),
       codeEditorTheme,
-      ...(localLintJson ? [linter(jsonParseLinter())] : []),
+      ...(localLintJson ? [jsonLint] : []),
       readOnlyCompartment.of([]),
       EditorView.contentAttributes.of(
         localInitialAriaLabel ? { "aria-label": localInitialAriaLabel } : {},

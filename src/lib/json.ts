@@ -6,10 +6,109 @@ export type JsonError = {
   column: number;
 };
 export type JsonResult =
-  { ok: true; value: string } | { ok: false; error: JsonError };
+  | { ok: true; value: string }
+  | { ok: false; error: JsonError };
 
 type ParseOutcome =
-  { ok: true; value: unknown } | { ok: false; error: JsonError };
+  | { ok: true; value: unknown }
+  | { ok: false; error: JsonError };
+
+type JsonErrorRule = {
+  pattern: RegExp;
+  translate: (match: RegExpExecArray) => string;
+};
+
+const JSON_ERROR_RULES: readonly JsonErrorRule[] = [
+  {
+    pattern: /unexpected token (['"])(?<token>.+?)\1/i,
+    translate: ({ groups }) => `Token inesperado "${groups?.token ?? ""}"`,
+  },
+  {
+    pattern: /unexpected identifier "(?<token>.+?)"/i,
+    translate: ({ groups }) => `Token inesperado "${groups?.token ?? ""}"`,
+  },
+  {
+    pattern: /unexpected end of (json input|data)/i,
+    translate: () => "JSON incompleto: fim inesperado da entrada",
+  },
+  {
+    pattern: /expected double-quoted property name/i,
+    translate: () => "Esperado nome de propriedade entre aspas duplas",
+  },
+  {
+    pattern: /expected property name or '\}'/i,
+    translate: () => "Esperado nome de propriedade ou '}'",
+  },
+  {
+    pattern: /expected ':' after property name/i,
+    translate: () => "Esperado ':' após o nome da propriedade",
+  },
+  {
+    pattern: /expected ',' or '\}' after property value/i,
+    translate: () => "Esperado ',' ou '}' após o valor da propriedade",
+  },
+  {
+    pattern: /expected ',' or '\]' after array element/i,
+    translate: () => "Esperado ',' ou ']' após o elemento do array",
+  },
+  {
+    pattern: /unterminated string/i,
+    translate: () => "String não terminada",
+  },
+  {
+    pattern: /bad escaped character/i,
+    translate: () => "Sequência de escape inválida",
+  },
+  {
+    pattern: /bad control character in string literal/i,
+    translate: () => "Caractere de controle inválido na string",
+  },
+  {
+    pattern: /unexpected non-whitespace character after json/i,
+    translate: () => "Caractere inesperado após o fim do JSON",
+  },
+  {
+    pattern: /unexpected character/i,
+    translate: () => "Caractere inesperado",
+  },
+  {
+    pattern: /unexpected keyword or identifier/i,
+    translate: () => "Palavra-chave ou identificador inesperado",
+  },
+  {
+    pattern: /unexpected eof/i,
+    translate: () => "JSON incompleto: fim inesperado da entrada",
+  },
+  {
+    pattern: /property name must be a string literal/i,
+    translate: () =>
+      "Nome de propriedade deve ser uma string entre aspas duplas",
+  },
+  {
+    pattern: /expected ',' or '\}'/i,
+    translate: () => "Esperado ',' ou '}'",
+  },
+  {
+    pattern: /expected ',' or '\]'/i,
+    translate: () => "Esperado ',' ou ']'",
+  },
+  {
+    pattern: /expected '\}'/i,
+    translate: () => "Esperado '}'",
+  },
+  {
+    pattern: /expected '\]'/i,
+    translate: () => "Esperado ']'",
+  },
+  {
+    pattern: /invalid character/i,
+    translate: () => "Caractere inválido",
+  },
+  {
+    pattern: /".*" is not valid json/i,
+    translate: () => "Conteúdo não é um JSON válido",
+  },
+];
 
 function deriveLocation(
   input: string,
@@ -45,12 +144,27 @@ function locateError(
   return { position: -1, line: -1, column: -1 };
 }
 
+export function translateJsonErrorMessage(rawMessage: string): string {
+  for (const rule of JSON_ERROR_RULES) {
+    const match = rule.pattern.exec(rawMessage);
+    if (match) return rule.translate(match);
+  }
+  return "Erro de sintaxe no JSON";
+}
+
+function buildJsonError(input: string, error: unknown): JsonError {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+  return {
+    message: translateJsonErrorMessage(rawMessage),
+    ...locateError(input, rawMessage),
+  };
+}
+
 function parseJson(input: string): ParseOutcome {
   try {
     return { ok: true, value: JSON.parse(input) };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, error: { message, ...locateError(input, message) } };
+    return { ok: false, error: buildJsonError(input, error) };
   }
 }
 
@@ -106,7 +220,7 @@ export function unescapeJson(input: string): JsonResult {
       return {
         ok: false,
         error: {
-          message: "Input is not a valid JSON string literal",
+          message: "A entrada não é um literal de string JSON válido",
           position: -1,
           line: -1,
           column: -1,
@@ -115,10 +229,9 @@ export function unescapeJson(input: string): JsonResult {
     }
     return { ok: true, value: parsed };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     return {
       ok: false,
-      error: { message, ...locateError(input, message) },
+      error: buildJsonError(input, error),
     };
   }
 }
