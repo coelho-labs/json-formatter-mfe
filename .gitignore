@@ -31,3 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 .mf/
+
+# Stryker (mutation testing)
+.stryker-tmp
+reports
+stryker.log

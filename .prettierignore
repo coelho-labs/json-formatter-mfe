@@ -13,3 +13,6 @@ dist
 @mf-types
 .mf-types
 .dev-server
+
+.stryker-tmp
+reports
