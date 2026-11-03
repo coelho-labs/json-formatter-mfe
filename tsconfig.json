@@ -5,16 +5,18 @@
     { "path": "./tsconfig.node.json" }
   ],
   "compilerOptions": {
-    "paths": { "@/*": ["./src/*"] },
-    "target": "es2023",
+    "allowImportingTsExtensions": true,
+    "ignoreDeprecations": "6.0",
+    "jsx": "react-jsx",
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "jsx": "react-jsx",
-    "types": ["vite/client"],
-    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": { "@/*": ["./src/*"] },
     "rootDir": ".",
-    "ignoreDeprecations": "6.0"
-  }
+    "skipLibCheck": true,
+    "target": "es2023",
+    "types": ["vite/client"]
+  },
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/**"]
 }
