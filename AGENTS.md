@@ -149,6 +149,75 @@ O Core/Host é o dono do tema (toggle em portal-shell, chave coelho-theme, class
 - Utilidades de saída: copiar para clipboard e baixar o resultado. I/O de browser fica na feature (não em src/lib/json.ts).
 - Sem backend / sem WebSocket: toda a computação é client-side; nada de lib/api, mappers ou conexão WS neste repo.
 
+## Testes (padrão obrigatório — Context-Driven Testing / BDD)
+
+Contrato de revisão para TODO teste novo (`*.test.ts`/`*.test.tsx`), unitário ou de integração. Vale para este repo e é o padrão a replicar nos demais MFEs. Não é sugestão de estilo.
+
+### Estrutura obrigatória — describes aninhados Given/when/then
+
+| Nível     | Bloco                              | Conteúdo permitido                                             |
+| --------- | ---------------------------------- | -------------------------------------------------------------- |
+| **Given** | `describe("Given …")`, o mais externo | só setup: dados base, mocks, `vi.mock`, stubs — no `beforeEach` |
+| **When**  | `describe("when …")` aninhado no Given | só o gatilho: `render`, um clique, uma action do hook — no `beforeEach` |
+| **Then**  | `it("then …")` dentro do When      | uma asserção; várias asserções sobre a mesma ação = vários `it` |
+
+```tsx
+describe("Given a valid JSON typed in the editor", () => {
+  beforeEach(() => {
+    /* dados base + mocks gerais */
+  });
+
+  describe("when the user clicks format", () => {
+    beforeEach(async () => {
+      /* um único gatilho */
+    });
+
+    it("then the output should be indented with two spaces", () => {
+      /* uma asserção */
+    });
+
+    it("then the key order should be preserved", () => {
+      /* outra asserção da MESMA ação */
+    });
+  });
+});
+```
+
+- `beforeEach` **nunca** contém `expect`. Setup no Given, gatilho no When, verificação só no `it`.
+- **Um gatilho por When** — dois cliques distintos = dois When, nunca dois `await` no mesmo `beforeEach`.
+- **DRY por aninhamento**: vários When sob o mesmo Given; vários Then sob o mesmo When. O `beforeEach` externo roda antes do interno, então cada When herda o Given sem repetir setup.
+- Prefixos literais e no caso exato: `Given` / `when` / `then`. Redação: `then` + sujeito + `should` (`then the output should …`, `then it should …`), nunca `then formats the json`.
+- **Títulos 100% em inglês** — `describe` e `it`, sem pt-BR e sem acento. Queries por nome acessível continuam em pt-BR (`getByRole("button", { name: /formatar/i })`, porque a UI é pt-BR); mensagens de `translateJsonErrorMessage`/`fileError` são dados assertados, não títulos.
+- Estado compartilhado: `let` no escopo do `describe`, atribuído no `beforeEach` (`strict` + `noUnusedLocals`).
+- Testes refletem o **código atual**, não o layout-alvo deste documento: não escrever `then` para recurso inexistente (ex.: toggle Texto/Árvore enquanto `Tool.page` não consumir `view`).
+
+### Escopo de cobertura
+
+- **Coberto**: todo código de feature — `src/lib/json.ts`, `useJsonFormatter`, `Toolbar`, `CodeEditor`, `JsonInput`, `JsonOutput`, `JsonTreeView`, `Tool.page`, `RemoteAppEntry`, `App`, `main`, `code-editor/theme.ts`.
+- **Fora (vendorizado/gerado)**: `src/components/ui/**` (CLI do shadcn sobre Base UI, sobrescrito pelo próximo `shadcn add`), `src/lib/utils.ts` (`cn`, scaffold), `src/index.css` (coberto por `diff` anti-drift), `src/test/*` (infra), configs.
+- O `include` do Vitest já é `src/**/*.test.{ts,tsx}`: basta não criar arquivo de teste em `components/ui/` — nenhuma mudança de config é necessária para excluir.
+- **Co-localizado**: `src/lib/json.test.ts`, `src/pages/tool/Tool.page.test.tsx`, etc. `src/test/` guarda só infra, nunca testes. Só `*.test.ts(x)` roda no Vitest **e** entra em `npm run test:types`.
+
+### CodeMirror em jsdom (decisão de estratégia)
+
+- Mockar `@/components/code-editor/CodeEditor.tsx` com um stub `<textarea>` controlado nos testes de `Tool.page`, `JsonInput` e `JsonOutput` (`vi.mock` no `beforeEach` do Given, pois é pré-condição do cenário).
+- CM6 real só em `CodeEditor.test.tsx` — isola o risco de jsdom num arquivo e mantém a suíte rápida.
+
+### Infra de teste e fronteiras do browser
+
+- `src/test/setup.ts`: `cleanup` + jest-dom. Polyfills de jsdom em `src/test/jsdom-polyfills.ts` importado pelo setup: `Range.prototype.getClientRects`/`getBoundingClientRect`, `Element.prototype.scrollIntoView`, `ResizeObserver` (Base UI `Select`/`Tooltip` usam) e `matchMedia` quando necessário.
+- O runner é `vitest.config.ts` com `globals: false` → importar `describe`/`it`/`expect`/`vi`/`beforeEach` de `"vitest"`. `clearMocks`/`restoreMocks` estão ligados, mas **não** desfazem `vi.stubGlobal` — habilitar `unstubGlobals`/`unstubEnvs` (ou limpar no `afterEach`), senão o stub de um When vaza para o próximo teste.
+- Router em teste: `MemoryRouter` + `initialEntries`. Nunca `BrowserRouter` (o router é do host) — `RemoteAppEntry` é testado como contrato de rotas.
+- Verificação de uma mudança: `npm run test` + `npm run test:types` (+ `npm run lint`/`npm run build` quando o teste alterar código).
+
+| Fronteira                        | Existe no jsdom? | Como mockar                                                        |
+| -------------------------------- | ---------------- | ------------------------------------------------------------------ |
+| `navigator.clipboard.writeText`  | não              | `vi.stubGlobal`/`defineProperty` + `vi.fn()`                        |
+| `URL.createObjectURL`/`revoke…`  | não              | `vi.stubGlobal`; o `revoke` roda em `setTimeout(…, 0)`              |
+| `DataTransfer` (drop de arquivo) | não              | `{ files: [file] }` + `fireEvent.drop(el, { dataTransfer })`        |
+| `HTMLAnchorElement.click`        | sim              | `vi.spyOn` para provar o download sem navegar                       |
+| timers (`copyStatus` 2000 ms)    | —                | `vi.useFakeTimers()` por When + `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })` |
+
 ##  TypeScript / lint (armadilhas reais do tsconfig)
 
 - erasableSyntaxOnly: true (TS 6): proibido enum, namespace e parameter properties (constructor(private x)) — use union types/objetos.

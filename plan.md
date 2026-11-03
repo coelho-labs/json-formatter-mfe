@@ -198,9 +198,17 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Testes unitários serão a primeira etapa; testes de mutação com StrykerJS e o runner Vitest oficial ficam planejados para etapa posterior, começando pelo núcleo puro de `src/lib/json.ts`.
 - A cobertura será observada sem impor um limiar global arbitrário antes de obter baseline; mutation testing terá execução separada, não obrigatória em cada ciclo de desenvolvimento.
 
+### 2026-11-03 — Padrão de testes Context-Driven Testing + infra de jsdom
+
+- Adotado o padrão Given/when/then com describes aninhados para **todo** teste deste repo (unitário e integração), a replicar nos demais MFEs. Contrato registrado em `AGENTS.md` → “Testes (padrão obrigatório — Context-Driven Testing / BDD)”.
+- Escopo: todo código de feature; `src/components/ui/**` (gerado pelo shadcn sobre Base UI) e `src/lib/utils.ts` (`cn`) ficam fora por serem vendorizados. Testes co-localizados `*.test.ts(x)`; `src/test/` guarda apenas infra.
+- CodeMirror: `CodeEditor` mockado (stub `<textarea>`) nos testes de página; CM6 real apenas em `CodeEditor.test.tsx`, isolando os polyfills de jsdom num arquivo.
+- Infra aplicada: `vitest.config.ts` com `unstubGlobals`/`unstubEnvs`; `src/test/jsdom-polyfills.ts` (geometry de `Range`/`Element`, `scrollIntoView`, pointer capture, `ResizeObserver`, `matchMedia`) importado por `src/test/setup.ts`.
+- Verificação: `npm run lint`, `npm run test:types` e `tsc -p tsconfig.app.json --noEmit` verdes; smoke de render do `Toolbar` (Base UI `Select`/`Tooltip` sob jsdom) aprovado e removido em seguida (nenhum teste de feature existe ainda).
+
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
-- Fases 9 e 10 pendentes: iniciar pelo setup e cobertura unitária de `json-formatter-mfe`; avaliar e replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
+- Fases 9 e 10 pendentes: setup de testes e padrão Given/when/then prontos; iniciar pela cobertura unitária de `src/lib/json.ts`; avaliar e replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
 
 ## Armadilhas aprendidas (reviews)
 - Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
@@ -218,4 +226,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-11-03 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline) em working tree — ainda não commitado; fases 9–10 (testes unitários e de mutação) planejadas
+- 2026-11-03 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline), padrão de testes registrado no AGENTS.md e infra de jsdom aplicada em working tree — ainda não commitado; fases 9–10 (testes unitários e de mutação) planejadas
