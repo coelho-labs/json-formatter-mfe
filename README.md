@@ -49,12 +49,25 @@ npm run lint     # eslint .
 npm run preview  # servidor de produção (4177, com CORS para o host)
 ```
 
+## Testes
+
+Este projeto usa Vitest como runner padrão, com React Testing Library e `user-event` para testar comportamento real de componentes e hooks.
+
+```bash
+npm run test        # executa a suíte em modo run
+npm run test:watch  # modo watch
+npm run test:types  # typecheck dos arquivos de teste
+```
+
+A suíte unitária é o fluxo principal de validação do domínio. A cobertura por mutação fica reservada para a etapa posterior com StrykerJS, e não como comando obrigatório no ciclo diário.
+
 ## Verificação
 
-Não há suíte de testes. A verificação padrão de uma mudança é:
+A verificação padrão de uma mudança é:
 
 ```bash
 npm run lint
+npm run test
 npx tsc -p tsconfig.app.json --noEmit
 npm run build
 ```

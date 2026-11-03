@@ -20,6 +20,8 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 6 | Upload / Drag & Drop | ✅ | 7554d68 |
 | 7 | Docs + a11y/responsivo + .env.example | ✅ | — |
 | 8 | Verificação de integração final | ✅ | — |
+| 9 | Testes unitários padronizados (piloto + replicação) | ⬜ | — |
+| 10 | Testes de mutação com StrykerJS | ⬜ | — |
 
 ## Detalhamento das fases
 
@@ -66,6 +68,23 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 ### Fase 8 — Verificação final
 - Entregáveis: nenhum código; checagens.
 - Aceite: `diff ../portal-shell/src/index.css src/index.css` vazio; `npm run build`; `npm run preview`; `mf-manifest.json` gerado.
+
+### Fase 9 — Testes unitários padronizados
+- Objetivo: estabelecer uma convenção de testes compartilhável entre `json-formatter-mfe`, `planning-poker-mfe` e `portal-shell`, preservando as responsabilidades específicas de cada app.
+- Runner: **Vitest**, integrado ao Vite; usar React Testing Library e `user-event` para testes de comportamento de componentes. Não manter Jest e Vitest em paralelo sem exigência organizacional.
+- Entrega no piloto (este repo): configuração e scripts separados para execução única e watch; testes co-localizados `*.test.ts(x)`; ambiente Node para lógica pura e `jsdom` para testes React; manter tipos/configuração de teste sem contaminar o build, o DTS ou o Module Federation.
+- Escopo inicial: começar pelas funções públicas de `src/lib/json.ts` (incluindo entradas válidas/inválidas, indentação, ordenação, escape/unescape e erros); depois testar os fluxos de maior valor de `useJsonFormatter` e poucos cenários de UI por comportamento acessível. Mockar fronteiras do browser pontualmente; não testar classes CSS, internals do CodeMirror ou detalhes de implementação sem necessidade.
+- Replicação: após o piloto passar, adaptar a mesma convenção de runner, ambiente, naming e scripts a `planning-poker-mfe` e `portal-shell`, com testes próprios para o domínio e arquitetura de cada projeto.
+- Aceite: testes determinísticos; `npm run test`, `npm run lint` e `npm run build` aprovados; DTS e artefatos Federation preservados; sem necessidade de script global de cobertura no fluxo normal.
+- Observação: não usar `--coverage` como padrão neste momento; a qualidade adicional da cobertura/força mutacional será validada pela etapa de mutação, e não por uma “cobertura obrigatória” no ciclo diário.
+
+### Fase 10 — Testes de mutação
+- Objetivo: verificar se os testes detectam alterações de comportamento que simulam defeitos.
+- Ferramenta: StrykerJS com `@stryker-mutator/vitest-runner`, em scripts separados da suíte unitária normal.
+- Escopo inicial: `src/lib/json.ts`; analisar mutantes sobreviventes relevantes e melhorar asserts quando necessário. Ampliar a hooks/UI e demais repositórios somente após avaliar valor e duração.
+- Não buscar score de 100% a qualquer custo: revisar mutantes equivalentes ou sem sentido e aplicar exclusões/comentários de forma pontual e justificada.
+- Aceite: versões compatíveis com o Node/Vite/Vitest instalados; execução independente dos testes normais; score inicial informativo e mutantes sobreviventes documentados/revisados.
+- Recomendação: usar a mutação como mecanismo principal de avaliação de cobertura/qualidade, em vez de manter um comando de cobertura regular como obrigação do fluxo.
 
 ## Decisões (log datado)
 
@@ -172,8 +191,16 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Limitação: erros V8 de `Unexpected token`/`Unexpected end` não trazem offset; nesses casos a toolbar segue sem linha/coluna. Inferir posição exigiria parser estruturado — fora do escopo.
 - Verificação: `npm run lint` + `npx tsc -p tsconfig.app.json --noEmit` + `npm run build` verdes; smoke de `translateJsonErrorMessage` com mensagens reais do V8 (Node 24) e sintéticas de Firefox/Safari.
 
+### 2026-11-03 — Plano de testes unitários e de mutação
+
+- Planejado um padrão de testes para `json-formatter-mfe`, `planning-poker-mfe` e `portal-shell`, começando pelo piloto neste repositório e adaptando a suíte ao domínio de cada app.
+- Recomendado **Vitest** em vez de Jest por sua integração com Vite, stack comum aos três projetos; React Testing Library + `user-event` para interações de UI.
+- Testes unitários serão a primeira etapa; testes de mutação com StrykerJS e o runner Vitest oficial ficam planejados para etapa posterior, começando pelo núcleo puro de `src/lib/json.ts`.
+- A cobertura será observada sem impor um limiar global arbitrário antes de obter baseline; mutation testing terá execução separada, não obrigatória em cada ciclo de desenvolvimento.
+
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
+- Fases 9 e 10 pendentes: iniciar pelo setup e cobertura unitária de `json-formatter-mfe`; avaliar e replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
 
 ## Armadilhas aprendidas (reviews)
 - Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
@@ -191,4 +218,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-10-31 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline) em working tree — ainda não commitado
+- 2026-11-03 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline) em working tree — ainda não commitado; fases 9–10 (testes unitários e de mutação) planejadas

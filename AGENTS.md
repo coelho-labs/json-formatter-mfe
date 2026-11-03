@@ -56,10 +56,14 @@ O que NÃO pertence aqui:
 npm run dev # servidor dev (Vite, modo remote standalone)
 npm run build # tsc -b && vite build (typecheck faz parte do build)
 npm run lint # eslint .
+npm run test # vitest run
+npm run test:watch # vitest --watch
+npm run test:types # tsc --noEmit -p tsconfig.test.json
 npm run preview # servidor de produção (porta 4177, com CORS para o host)
 
-- Não há test runner nem suíte de testes.
-- Verificação padrão de uma mudança: npm run lint e npm run build.
+- O runner padrão é Vitest.
+- Não usar `--coverage` como requisito obrigatório no fluxo normal; a validação de cobertura/qualidade mais forte fica para testes de mutação em etapa posterior.
+- Verificação padrão de uma mudança: npm run lint, npm run test e npm run build.
 
 ## Module Federation (plugin atual — não confunda!)
 
