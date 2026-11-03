@@ -4,6 +4,11 @@
     "noEmit": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test/setup.ts"],
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/test/setup.ts",
+    "src/test/vitest-env.d.ts"
+  ],
   "exclude": ["node_modules", "dist", ".mf"]
 }
