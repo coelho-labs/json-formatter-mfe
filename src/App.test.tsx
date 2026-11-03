@@ -128,3 +128,52 @@ describe("Given the dev shell following the system theme", () => {
     });
   });
 });
+
+describe("Given the dev shell with the light theme stored", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(THEME_KEY, "light");
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(false);
+    goTo("/json-formatter/");
+    render(<App />);
+  });
+
+  describe("when it renders", () => {
+    it("then the document should not carry the dark class", () => {
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+
+    it("then the color scheme should follow the light theme", () => {
+      expect(document.documentElement.style.colorScheme).toBe("light");
+    });
+
+    it("then the theme should be persisted as light", () => {
+      expect(localStorage.getItem(THEME_KEY)).toBe("light");
+    });
+  });
+});
+
+describe("Given the dev shell with no theme stored and system prefers light", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(false);
+    goTo("/json-formatter/");
+    render(<App />);
+  });
+
+  describe("when it renders", () => {
+    it("then the document should not carry the dark class", () => {
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+
+    it("then the color scheme should follow the light theme", () => {
+      expect(document.documentElement.style.colorScheme).toBe("light");
+    });
+
+    it("then the theme should be persisted as light", () => {
+      expect(localStorage.getItem(THEME_KEY)).toBe("light");
+    });
+  });
+});

@@ -280,3 +280,120 @@ describe("Given a tree view with a className", () => {
     expect(screen.getByText("a:")).toBeInTheDocument();
   });
 });
+
+describe("Given a tree view with a string value labeled", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ chave: "valor" }} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the property label should be shown", () => {
+      expect(screen.getByText("chave:")).toBeInTheDocument();
+    });
+
+    it("then the string value should be rendered with quotes", () => {
+      expect(screen.getByText('"valor"')).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with a number value labeled", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ idade: 42 }} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the property label should be shown", () => {
+      expect(screen.getByText("idade:")).toBeInTheDocument();
+    });
+
+    it("then the number value should be rendered without quotes", () => {
+      expect(screen.getByText("42")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with a boolean value labeled", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ ativo: true }} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the property label should be shown", () => {
+      expect(screen.getByText("ativo:")).toBeInTheDocument();
+    });
+
+    it("then the boolean value should be rendered without quotes", () => {
+      expect(screen.getByText("true")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with an array value labeled", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ itens: [1, 2, 3] }} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the property label should be shown", () => {
+      expect(screen.getByText("itens:")).toBeInTheDocument();
+    });
+
+    it("then the array items should be expanded by default", () => {
+      expect(screen.getByText("0:")).toBeInTheDocument();
+      expect(screen.getByText("2:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with an array node collapsed", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={[1, 2, 3]} />);
+  });
+
+  describe("when the root is collapsed", () => {
+    beforeEach(async () => {
+      await userEvent.click(
+        screen.getByRole("button", { name: /recolher raiz/i }),
+      );
+    });
+
+    it("then the items should be hidden", () => {
+      expect(screen.queryByText("0:")).toBeNull();
+      expect(screen.queryByText("1:")).toBeNull();
+      expect(screen.queryByText("2:")).toBeNull();
+    });
+
+    it("then the item count summary should be shown", () => {
+      expect(screen.getByText("[3 itens]")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with an array node expanded", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={[10, 20]} />);
+  });
+
+  describe("when it renders", () => {
+    it("then each item should be labelled by index", () => {
+      expect(screen.getByText("0:")).toBeInTheDocument();
+      expect(screen.getByText("1:")).toBeInTheDocument();
+    });
+
+    it("then each item value should be shown", () => {
+      expect(screen.getByText("10")).toBeInTheDocument();
+      expect(screen.getByText("20")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view without className", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ a: 1 }} />);
+  });
+
+  it("then the value should still be rendered", () => {
+    expect(screen.getByText("a:")).toBeInTheDocument();
+  });
+});

@@ -77,6 +77,12 @@ describe("Given the tool page mounted with an empty formatter", () => {
         "/json-formatter",
       );
     });
+
+    it("then the tree section should not be rendered", () => {
+      expect(
+        screen.queryByRole("heading", { name: /árvore \(leitura\)/i }),
+      ).toBeNull();
+    });
   });
 });
 

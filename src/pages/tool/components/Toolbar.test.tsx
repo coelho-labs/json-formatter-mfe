@@ -392,3 +392,143 @@ describe("Given a toolbar with tooltips", () => {
     });
   });
 });
+
+describe("Given a toolbar with tab indent selected", () => {
+  beforeEach(() => {
+    renderToolbar({ indent: "\t" });
+  });
+
+  describe("when it renders", () => {
+    it("then the select should show Tab", () => {
+      expect(
+        screen.getByRole("combobox", { name: /indentação/i }),
+      ).toHaveTextContent("Tab");
+    });
+  });
+});
+
+describe("Given a toolbar with indent 4 selected", () => {
+  beforeEach(() => {
+    renderToolbar({ indent: 4 });
+  });
+
+  describe("when it renders", () => {
+    it("then the select should show 4", () => {
+      expect(
+        screen.getByRole("combobox", { name: /indentação/i }),
+      ).toHaveTextContent("4");
+    });
+  });
+});
+
+describe("Given a toolbar with error positioned only on line", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, column: -1, position: -1 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the error badge should omit the column", () => {
+      expect(screen.queryByText(/coluna/)).toBeNull();
+    });
+
+    it("then the error badge should still show the message", () => {
+      expect(
+        screen.getByText(/esperado ':' após o nome da propriedade/i),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a toolbar with error positioned only on column", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, line: -1, position: -1 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the error badge should omit the line", () => {
+      expect(screen.queryByText(/linha/)).toBeNull();
+    });
+
+    it("then the error badge should still show the message", () => {
+      expect(
+        screen.getByText(/esperado ':' após o nome da propriedade/i),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a toolbar in tree mode with tree available", () => {
+  beforeEach(() => {
+    renderToolbar({ canShowTree: true, view: "tree" });
+  });
+
+  describe("when it renders", () => {
+    it("then the mode button should be enabled", () => {
+      expect(screen.getByRole("button", { name: /modo/i })).not.toBeDisabled();
+    });
+
+    it("then the mode button should be pressed", () => {
+      expect(screen.getByRole("button", { name: /modo/i })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
+
+    it("then the mode label should be Árvore", () => {
+      expect(screen.getByText(/árvore/i)).toBeInTheDocument();
+    });
+
+    it("then the mode tooltip should say Ver em modo texto", async () => {
+      await userEvent.hover(screen.getByRole("button", { name: /modo/i }));
+      expect(await screen.findByText(/ver em modo texto/i)).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a toolbar in text mode with tree unavailable", () => {
+  beforeEach(() => {
+    renderToolbar({ canShowTree: false, view: "text" });
+  });
+
+  describe("when it renders", () => {
+    it("then the mode button should be disabled", () => {
+      expect(screen.getByRole("button", { name: /modo/i })).toBeDisabled();
+    });
+
+    it("then the mode button should not be pressed", () => {
+      expect(screen.getByRole("button", { name: /modo/i })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    });
+
+    it("then the mode label should be Texto", () => {
+      expect(screen.getByText(/texto/i)).toBeInTheDocument();
+    });
+
+    it("then the mode tooltip should say Ver em árvore colapsável", async () => {
+      await userEvent.hover(screen.getByRole("button", { name: /modo/i }));
+      expect(
+        await screen.findByText(/ver em árvore colapsável/i),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a toolbar with validated false and no error", () => {
+  beforeEach(() => {
+    renderToolbar({ validated: false, error: null });
+  });
+
+  describe("when it renders", () => {
+    it("then no invalid badge should be shown", () => {
+      expect(screen.queryByText(/inválido/i)).toBeNull();
+    });
+  });
+});

@@ -607,4 +607,160 @@ describe("Given the formatter initialized with valid JSON", () => {
       expect(view.current.output).toContain('"b": 1');
     });
   });
+
+  describe("when format is called on invalid JSON", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setInput('{"a":1,}');
+      });
+      await act(async () => {
+        view.current.format();
+      });
+    });
+
+    it("then the error should be reported", () => {
+      expect(view.current.error).not.toBeNull();
+    });
+
+    it("then the output should be empty", () => {
+      expect(view.current.output).toBe("");
+    });
+  });
+
+  describe("when validate is called on valid JSON", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.validate();
+      });
+    });
+
+    it("then the document should be marked as valid", () => {
+      expect(view.current.validated).toBe(true);
+    });
+
+    it("then there should be no error", () => {
+      expect(view.current.error).toBeNull();
+    });
+  });
+});
+
+describe("Given the formatter with copy status already set", () => {
+  let view: FormatterView;
+  let writeText: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      await view.current.copy();
+    });
+  });
+
+  describe("when copy is called again", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        await view.current.copy();
+      });
+    });
+
+    it("then the copy status should be copied", () => {
+      expect(view.current.copyStatus).toBe("copied");
+    });
+
+    it("then the clipboard should be called again", () => {
+      expect(writeText).toHaveBeenCalledTimes(2);
+    });
+  });
+});
+
+describe("Given the formatter with state populated", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      view.current.clear();
+    });
+  });
+
+  it("then the input should be empty", () => {
+    expect(view.current.input).toBe("");
+  });
+
+  it("then the output should be empty", () => {
+    expect(view.current.output).toBe("");
+  });
+
+  it("then the error should be null", () => {
+    expect(view.current.error).toBeNull();
+  });
+
+  it("then the validated state should be null", () => {
+    expect(view.current.validated).toBeNull();
+  });
+
+  it("then the copy status should be idle", () => {
+    expect(view.current.copyStatus).toBe("idle");
+  });
+
+  it("then the file error should be null", () => {
+    expect(view.current.fileError).toBeNull();
+  });
+});
+
+describe("Given the formatter with whitespace-only input", () => {
+  let view: FormatterView;
+
+  beforeEach(() => {
+    view = mountFormatter("   ");
+  });
+
+  it("then hasInput should be false", () => {
+    expect(view.current.hasInput).toBe(false);
+  });
+});
+
+describe("Given the formatter with whitespace-only output", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter();
+    await act(async () => {
+      view.current.setInput("   ");
+    });
+  });
+
+  it("then hasOutput should be false", () => {
+    expect(view.current.hasOutput).toBe(false);
+  });
+});
+
+describe("Given the formatter with no output and tree requested", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter();
+    await act(async () => {
+      view.current.setView("tree");
+    });
+    await Promise.resolve();
+  });
+
+  it("then the view should fall back to text", () => {
+    expect(view.current.view).toBe("text");
+  });
+
+  it("then the tree view should be unavailable", () => {
+    expect(view.current.canShowTree).toBe(false);
+  });
 });
