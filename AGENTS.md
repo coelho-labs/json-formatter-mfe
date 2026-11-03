@@ -193,10 +193,11 @@ describe("Given a valid JSON typed in the editor", () => {
 
 ### Escopo de cobertura
 
-- **Coberto**: todo código de feature — `src/lib/json.ts`, `useJsonFormatter`, `Toolbar`, `CodeEditor`, `JsonInput`, `JsonOutput`, `JsonTreeView`, `Tool.page`, `RemoteAppEntry`, `App`, `main`, `code-editor/theme.ts`.
+- **Coberto**: todo código de feature — `src/lib/json.ts`, `useJsonFormatter`, `Toolbar`, `CodeEditor`, `JsonInput`, `JsonOutput`, `JsonTreeView`, `Tool.page`, `Home.page`, `RemoteAppEntry`, `App`, `main`, `code-editor/theme.ts`.
 - **Fora (vendorizado/gerado)**: `src/components/ui/**` (CLI do shadcn sobre Base UI, sobrescrito pelo próximo `shadcn add`), `src/lib/utils.ts` (`cn`, scaffold), `src/index.css` (coberto por `diff` anti-drift), `src/test/*` (infra), configs.
 - O `include` do Vitest já é `src/**/*.test.{ts,tsx}`: basta não criar arquivo de teste em `components/ui/` — nenhuma mudança de config é necessária para excluir.
 - **Co-localizado**: `src/lib/json.test.ts`, `src/pages/tool/Tool.page.test.tsx`, etc. `src/test/` guarda só infra, nunca testes. Só `*.test.ts(x)` roda no Vitest **e** entra em `npm run test:types`.
+- `tsconfig.app.json` exclui `src/**/*.test.ts(x)` e `src/test/**`: o `tsc -b` do `npm run build` não compila testes nem exige `@types/node` no projeto da app. Os tipos dos testes são verificados por `npm run test:types` (`tsconfig.test.json`, com `types: ["vite/client", "node"]`).
 
 ### CodeMirror em jsdom (decisão de estratégia)
 

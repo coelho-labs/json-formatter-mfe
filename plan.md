@@ -20,7 +20,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 | 6 | Upload / Drag & Drop | ✅ | 7554d68 |
 | 7 | Docs + a11y/responsivo + .env.example | ✅ | — |
 | 8 | Verificação de integração final | ✅ | — |
-| 9 | Testes unitários padronizados (piloto + replicação) | ⬜ | — |
+| 9 | Testes unitários padronizados (piloto + replicação) | 🟨 | — |
 | 10 | Testes de mutação com StrykerJS | ⬜ | — |
 
 ## Detalhamento das fases
@@ -75,6 +75,7 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Entrega no piloto (este repo): configuração e scripts separados para execução única e watch; testes co-localizados `*.test.ts(x)`; ambiente Node para lógica pura e `jsdom` para testes React; manter tipos/configuração de teste sem contaminar o build, o DTS ou o Module Federation.
 - Escopo inicial: começar pelas funções públicas de `src/lib/json.ts` (incluindo entradas válidas/inválidas, indentação, ordenação, escape/unescape e erros); depois testar os fluxos de maior valor de `useJsonFormatter` e poucos cenários de UI por comportamento acessível. Mockar fronteiras do browser pontualmente; não testar classes CSS, internals do CodeMirror ou detalhes de implementação sem necessidade.
 - Replicação: após o piloto passar, adaptar a mesma convenção de runner, ambiente, naming e scripts a `planning-poker-mfe` e `portal-shell`, com testes próprios para o domínio e arquitetura de cada projeto.
+- Piloto deste repo (2026-11-03): 13 arquivos `*.test.ts(x)` co-localizados, 228 testes no padrão Given/when/then do `AGENTS.md`; `Home.page`, `Toolbar`, `Tool.page`, `RemoteAppEntry`, `App` e `main` também cobertos. Ver a decisão datada correspondente.
 - Aceite: testes determinísticos; `npm run test`, `npm run lint` e `npm run build` aprovados; DTS e artefatos Federation preservados; sem necessidade de script global de cobertura no fluxo normal.
 - Observação: não usar `--coverage` como padrão neste momento; a qualidade adicional da cobertura/força mutacional será validada pela etapa de mutação, e não por uma “cobertura obrigatória” no ciclo diário.
 
@@ -206,9 +207,19 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Infra aplicada: `vitest.config.ts` com `unstubGlobals`/`unstubEnvs`; `src/test/jsdom-polyfills.ts` (geometry de `Range`/`Element`, `scrollIntoView`, pointer capture, `ResizeObserver`, `matchMedia`) importado por `src/test/setup.ts`.
 - Verificação: `npm run lint`, `npm run test:types` e `tsc -p tsconfig.app.json --noEmit` verdes; smoke de render do `Toolbar` (Base UI `Select`/`Tooltip` sob jsdom) aprovado e removido em seguida (nenhum teste de feature existe ainda).
 
+### 2026-11-03 — Suíte unitária do piloto entregue (228 testes)
+
+- Entregues 13 arquivos `*.test.ts(x)` co-localizados, todos no padrão Given/when/then: `src/lib/json.test.ts`, `useJsonFormatter.test.ts`, `Toolbar.test.tsx`, `JsonInput.test.tsx`, `JsonOutput.test.tsx`, `JsonTreeView.test.tsx`, `Tool.page.test.tsx`, `Home.page.test.tsx`, `RemoteAppEntry.test.tsx`, `App.test.tsx`, `main.test.tsx`, `CodeEditor.test.tsx` e `theme.test.ts`.
+- CodeMirror: `CodeEditor` real apenas em `CodeEditor.test.tsx` (edição via `EditorView.findFromDOM` + `dispatch`, sem simular digitação); nos demais arquivos o wrapper é mockado com `vi.mock` e um `<textarea>` controlado.
+- `theme.test.ts` virou guarda anti-drift: lê `src/index.css` do disco (`?raw` sobre CSS vira módulo vazio no Vitest), proíbe cor literal (hex/rgb/hsl) e falha se `theme.ts` referenciar token não declarado no `index.css`.
+- Decisão de build: `tsconfig.app.json` passou a excluir `src/**/*.test.ts(x)` e `src/test/**` — `tsc -b` não compila testes (os tipos deles são verificados por `npm run test:types`), evitando depender de `@types/node` no projeto da app.
+- `tsconfig.test.json` ganhou `"types": ["vite/client", "node"]` por causa do teste que lê CSS do disco.
+- `main.test.tsx` exige `vi.resetModules()` antes do `await import("./main.tsx")`: o cache de módulo sobrevive ao `clearMocks` e o teste veria a execução anterior.
+- Verificação: `npm run lint`, `npm run test` (13 arquivos / 228 testes), `npm run test:types` e `npm run build` verdes; `npx prettier --check` aprovado nos testes e nos docs.
+
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
-- Fases 9 e 10 pendentes: setup de testes e padrão Given/when/then prontos; iniciar pela cobertura unitária de `src/lib/json.ts`; avaliar e replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
+- Fases 9 e 10 pendentes: piloto de testes entregue neste repo (13 arquivos / 228 testes, ver decisão datada); falta replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
 
 ## Armadilhas aprendidas (reviews)
 - Regex de mensagem de engine precisa ser testado contra mensagens **reais**: `column(?<column>\d+)` (sem espaço) não casa `column 3` e o ramo cai silencioso no fallback.
@@ -226,4 +237,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Overlay absoluto sobre o CodeMirror: `.cm-editor` tem fundo opaco e `.cm-scroller` é `position: relative` — para o overlay pintar por cima, colocá-lo **depois** do editor na árvore (ou usar `z-10`).
 
 ## Última atualização
-- 2026-11-03 · commit base: 7554d68 (Fase 6) · erros de parse traduzidos para pt-BR (toolbar + lint inline), padrão de testes registrado no AGENTS.md e infra de jsdom aplicada em working tree — ainda não commitado; fases 9–10 (testes unitários e de mutação) planejadas
+- 2026-11-03 · commit base: 21a02fc · erros de parse traduzidos para pt-BR (toolbar + lint inline), padrão Context-Driven Testing registrado no AGENTS.md, infra de jsdom e **suíte piloto entregue** (13 arquivos / 228 testes, verdes em lint/test/test:types/build) — testes e ajustes de docs ainda em working tree, não commitados; Fase 9 🟨, Fase 10 pendente
