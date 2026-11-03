@@ -453,3 +453,158 @@ describe("Given the formatter with a readable file", () => {
     });
   });
 });
+
+describe("Given the formatter initialized with valid JSON and a tab indent", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.setIndent("\t");
+    });
+  });
+
+  describe("when format is called", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.format();
+      });
+    });
+
+    it("then the output should be indented with tabs", () => {
+      expect(view.current.output).toContain('\t"b": 1,');
+    });
+
+    it("then the indent should remain as tab", () => {
+      expect(view.current.indent).toBe("\t");
+    });
+  });
+});
+
+describe("Given the formatter with formatted output and unescape called on it", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      view.current.unescape();
+    });
+  });
+
+  it("then the output should be empty because formatted JSON is not a string literal", () => {
+    expect(view.current.output).toBe("");
+  });
+
+  it("then the error should explain the expected string literal", () => {
+    expect(view.current.error?.message).toBe(
+      "A entrada não é um literal de string JSON válido",
+    );
+  });
+});
+
+describe("Given the formatter with an empty output", () => {
+  let view: FormatterView;
+  let writeText: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    view = mountFormatter();
+  });
+
+  describe("when copy is called", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        await view.current.copy();
+      });
+    });
+
+    it("then the clipboard should not be called", () => {
+      expect(writeText).not.toHaveBeenCalled();
+    });
+
+    it("then the copy status should stay idle", () => {
+      expect(view.current.copyStatus).toBe("idle");
+    });
+  });
+
+  describe("when download is called", () => {
+    let createObjectURL: ReturnType<typeof vi.fn>;
+    let clickSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(async () => {
+      createObjectURL = vi.fn(() => "blob:mock-output");
+      clickSpy = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => {});
+      Object.defineProperty(URL, "createObjectURL", {
+        configurable: true,
+        value: createObjectURL,
+      });
+      await act(async () => {
+        view.current.download();
+      });
+    });
+
+    it("then no blob should be created", () => {
+      expect(createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it("then no anchor should be clicked", () => {
+      expect(clickSpy).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("Given the formatter with a validation error and tree view requested", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      view.current.setView("tree");
+    });
+  });
+
+  it("then the view should fall back to text because there is an error", () => {
+    expect(view.current.view).toBe("text");
+  });
+
+  it("then the tree view should be unavailable", () => {
+    expect(view.current.canShowTree).toBe(false);
+  });
+});
+
+describe("Given the formatter initialized with valid JSON", () => {
+  let view: FormatterView;
+
+  beforeEach(() => {
+    view = mountFormatter(VALID_INPUT);
+  });
+
+  describe("when sortKeys is called with a four-space indent", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setIndent(4);
+      });
+      await act(async () => {
+        view.current.sortKeys();
+      });
+    });
+
+    it("then the output should have four-space indentation", () => {
+      expect(view.current.output).toContain('    "a": [');
+    });
+
+    it("then the keys should be alphabetically ordered", () => {
+      expect(view.current.output).toContain('"a": [');
+      expect(view.current.output).toContain('"b": 1');
+    });
+  });
+});

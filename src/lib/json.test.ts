@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JsonError, JsonResult } from "./json.ts";
 import {
   escapeJson,
@@ -222,6 +222,155 @@ describe("Given an invalid JSON document", () => {
   });
 });
 
+const MULTILINE_INPUT = '{\n  "a": 1,\n}';
+
+describe("Given a parse error that reports only a source position", () => {
+  let rawMessage: string;
+  let result: JsonResult;
+
+  beforeEach(() => {
+    vi.spyOn(JSON, "parse").mockImplementation(() => {
+      throw new SyntaxError(rawMessage);
+    });
+  });
+
+  describe("when the position falls inside a line", () => {
+    beforeEach(() => {
+      rawMessage = "Expected property name or '}' in JSON at position 5";
+      result = formatJson(MULTILINE_INPUT, 2);
+    });
+
+    it("then the message should be translated to pt-BR", () => {
+      expect(errorOf(result).message).toBe(
+        "Esperado nome de propriedade ou '}'",
+      );
+    });
+
+    it("then it should keep the position reported by the engine", () => {
+      expect(errorOf(result).position).toBe(5);
+    });
+
+    it("then the line should be derived from the position", () => {
+      expect(errorOf(result).line).toBe(2);
+    });
+
+    it("then the column should be derived from the position", () => {
+      expect(errorOf(result).column).toBe(4);
+    });
+  });
+
+  describe("when the position is zero", () => {
+    beforeEach(() => {
+      rawMessage = "Expected property name or '}' in JSON at position 0";
+      result = formatJson(MULTILINE_INPUT, 2);
+    });
+
+    it("then the line should be the first one", () => {
+      expect(errorOf(result).line).toBe(1);
+    });
+
+    it("then the column should be the first one", () => {
+      expect(errorOf(result).column).toBe(1);
+    });
+  });
+
+  describe("when the position sits at the start of a line", () => {
+    beforeEach(() => {
+      rawMessage = "Expected property name or '}' in JSON at position 12";
+      result = formatJson(MULTILINE_INPUT, 2);
+    });
+
+    it("then the line should count the breaks before the position", () => {
+      expect(errorOf(result).line).toBe(3);
+    });
+
+    it("then the column should be reset to the line start", () => {
+      expect(errorOf(result).column).toBe(1);
+    });
+  });
+
+  describe("when the position is beyond the end of the input", () => {
+    beforeEach(() => {
+      rawMessage = "Expected property name or '}' in JSON at position 99";
+      result = formatJson(MULTILINE_INPUT, 2);
+    });
+
+    it("then the line should be clamped to the last one", () => {
+      expect(errorOf(result).line).toBe(3);
+    });
+
+    it("then the column should be clamped to the last line end", () => {
+      expect(errorOf(result).column).toBe(2);
+    });
+  });
+});
+
+describe("Given a parse error that reports line and column", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    vi.spyOn(JSON, "parse").mockImplementation(() => {
+      throw new SyntaxError(
+        "JSON.parse: unexpected character at line 4 column 8 of the JSON data",
+      );
+    });
+  });
+
+  describe("when formatJson is called", () => {
+    beforeEach(() => {
+      result = formatJson('{"a":1,}', 2);
+    });
+
+    it("then the message should be translated to pt-BR", () => {
+      expect(errorOf(result).message).toBe("Caractere inesperado");
+    });
+
+    it("then the position should be the sentinel", () => {
+      expect(errorOf(result).position).toBe(-1);
+    });
+
+    it("then the line should come from the raw message", () => {
+      expect(errorOf(result).line).toBe(4);
+    });
+
+    it("then the column should come from the raw message", () => {
+      expect(errorOf(result).column).toBe(8);
+    });
+  });
+});
+
+describe("Given a parse error without any location information", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    vi.spyOn(JSON, "parse").mockImplementation(() => {
+      throw new SyntaxError("Something completely different");
+    });
+  });
+
+  describe("when formatJson is called", () => {
+    beforeEach(() => {
+      result = formatJson("{", 2);
+    });
+
+    it("then the message should fall back to the generic translation", () => {
+      expect(errorOf(result).message).toBe("Erro de sintaxe no JSON");
+    });
+
+    it("then the position should be the sentinel", () => {
+      expect(errorOf(result).position).toBe(-1);
+    });
+
+    it("then the line should be the sentinel", () => {
+      expect(errorOf(result).line).toBe(-1);
+    });
+
+    it("then the column should be the sentinel", () => {
+      expect(errorOf(result).column).toBe(-1);
+    });
+  });
+});
+
 describe("Given an escaped string literal", () => {
   let result: JsonResult;
 
@@ -272,6 +421,14 @@ describe("Given a JSON document instead of a string literal", () => {
 
     it("then it should not report a source position", () => {
       expect(errorOf(result).position).toBe(-1);
+    });
+
+    it("then it should not report a source line", () => {
+      expect(errorOf(result).line).toBe(-1);
+    });
+
+    it("then it should not report a source column", () => {
+      expect(errorOf(result).column).toBe(-1);
     });
   });
 });
@@ -384,6 +541,26 @@ const TRANSLATION_CASES: readonly TranslationCase[] = [
     expected: "Nome de propriedade deve ser uma string entre aspas duplas",
   },
   {
+    engine: "Safari object separator",
+    raw: "JSON Parse error: Expected ',' or '}'",
+    expected: "Esperado ',' ou '}'",
+  },
+  {
+    engine: "Safari array separator",
+    raw: "JSON Parse error: Expected ',' or ']'",
+    expected: "Esperado ',' ou ']'",
+  },
+  {
+    engine: "Safari multi-character identifier",
+    raw: 'JSON Parse error: Unexpected identifier "foo"',
+    expected: 'Token inesperado "foo"',
+  },
+  {
+    engine: "V8 invalid document",
+    raw: '"abcdef" is not valid JSON',
+    expected: "Conteúdo não é um JSON válido",
+  },
+  {
     engine: "unmapped",
     raw: "Something completely different",
     expected: "Erro de sintaxe no JSON",
@@ -410,4 +587,164 @@ describe("Given a raw parse error message", () => {
       });
     });
   }
+});
+
+describe("Given validateJson with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = validateJson("");
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+
+  it("then the error should report an unexpected end of input", () => {
+    expect(errorOf(result).message).toBe(
+      "JSON incompleto: fim inesperado da entrada",
+    );
+  });
+});
+
+describe("Given validateJson with whitespace only", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = validateJson("   ");
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+
+  it("then the error should report an unexpected end of input", () => {
+    expect(errorOf(result).message).toBe(
+      "JSON incompleto: fim inesperado da entrada",
+    );
+  });
+});
+
+describe("Given formatJson with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = formatJson("", 2);
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+
+  it("then the error should report an unexpected end of input", () => {
+    expect(errorOf(result).message).toBe(
+      "JSON incompleto: fim inesperado da entrada",
+    );
+  });
+});
+
+describe("Given minifyJson with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = minifyJson("");
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("Given sortJsonKeys with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = sortJsonKeys("", 2);
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe("Given escapeJson with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = escapeJson("");
+  });
+
+  it("then it should report success", () => {
+    expect(result.ok).toBe(true);
+  });
+
+  it("then the output should be a quoted empty string", () => {
+    expect(valueOf(result)).toBe('""');
+  });
+});
+
+describe("Given escapeJson with special characters", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = escapeJson('hello "world" \\n');
+  });
+
+  it("then it should report success", () => {
+    expect(result.ok).toBe(true);
+  });
+
+  it("then the output should escape quotes and backslashes", () => {
+    expect(valueOf(result)).toBe('"hello \\"world\\" \\\\n"');
+  });
+});
+
+describe("Given unescapeJson with a valid JSON string literal", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = unescapeJson('"olá mundo"');
+  });
+
+  it("then it should report success", () => {
+    expect(result.ok).toBe(true);
+  });
+
+  it("then the output should be the unescaped content", () => {
+    expect(valueOf(result)).toBe("olá mundo");
+  });
+});
+
+describe("Given unescapeJson with a JSON number (not a string)", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = unescapeJson("42");
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
+
+  it("then the error should explain the expected string literal", () => {
+    expect(errorOf(result).message).toBe(
+      "A entrada não é um literal de string JSON válido",
+    );
+  });
+
+  it("then the error position should be -1", () => {
+    expect(errorOf(result).position).toBe(-1);
+  });
+});
+
+describe("Given unescapeJson with an empty string", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = unescapeJson("");
+  });
+
+  it("then it should report failure", () => {
+    expect(result.ok).toBe(false);
+  });
 });

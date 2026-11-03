@@ -158,4 +158,125 @@ describe("Given a primitive root value", () => {
       expect(screen.getByText('"texto"')).toBeInTheDocument();
     });
   });
+
+  describe("when the value is a boolean", () => {
+    beforeEach(() => {
+      render(<JsonTreeView value={true} />);
+    });
+
+    it("then the value should be rendered without quotes", () => {
+      expect(screen.getByText("true")).toBeInTheDocument();
+      expect(screen.queryByRole("button")).toBeNull();
+    });
+  });
+
+  describe("when the value is null", () => {
+    beforeEach(() => {
+      render(<JsonTreeView value={null} />);
+    });
+
+    it("then the value should be rendered as null", () => {
+      expect(screen.getByText("null")).toBeInTheDocument();
+      expect(screen.queryByRole("button")).toBeNull();
+    });
+  });
+});
+
+describe("Given an empty array in the tree view", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={[]} />);
+  });
+
+  describe("when the tree is mounted", () => {
+    it("then the root should be expanded", () => {
+      expect(
+        screen.getByRole("button", { name: /recolher raiz/i }),
+      ).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("then the empty array brackets should be shown", () => {
+      expect(screen.getByText("[").closest("div")).toBeInTheDocument();
+      expect(screen.getByText("]").closest("div")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given an empty object in the tree view", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{}} />);
+  });
+
+  describe("when the tree is mounted", () => {
+    it("then the root should be expanded", () => {
+      expect(
+        screen.getByRole("button", { name: /recolher raiz/i }),
+      ).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("then the empty object braces should be shown", () => {
+      expect(screen.getByText("{").closest("div")).toBeInTheDocument();
+      expect(screen.getByText("}").closest("div")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given an array with mixed types in the tree view", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={[1, "dois", true, null]} />);
+  });
+
+  describe("when the tree is mounted", () => {
+    it("then each item should be rendered with its type-appropriate style", () => {
+      expect(screen.getByText("1")).toBeInTheDocument();
+      expect(screen.getByText('"dois"')).toBeInTheDocument();
+      expect(screen.getByText("true")).toBeInTheDocument();
+      expect(screen.getByText("null")).toBeInTheDocument();
+    });
+
+    it("then each item should be labelled by its index", () => {
+      expect(screen.getByText("0:")).toBeInTheDocument();
+      expect(screen.getByText("3:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a deeply nested object in the tree view", () => {
+  beforeEach(() => {
+    render(
+      <JsonTreeView value={{ level1: { level2: { level3: "profundo" } } }} />,
+    );
+  });
+
+  describe("when the intermediate node is collapsed", () => {
+    beforeEach(async () => {
+      await userEvent.click(
+        screen.getByRole("button", { name: /recolher level1/i }),
+      );
+    });
+
+    it("then the deepest key should be hidden", () => {
+      expect(screen.queryByText("level3:")).toBeNull();
+    });
+
+    it("then the intermediate node should show its key count", () => {
+      expect(screen.getByText("{1 chaves}")).toBeInTheDocument();
+    });
+
+    it("then expanding the intermediate node should reveal the deepest key", async () => {
+      await userEvent.click(
+        screen.getByRole("button", { name: /expandir level1/i }),
+      );
+      expect(screen.getByText("level3:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with a className", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ a: 1 }} className="minha-classe" />);
+  });
+
+  it("then the className should be applied to the container", () => {
+    expect(screen.getByText("a:")).toBeInTheDocument();
+  });
 });
