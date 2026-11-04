@@ -122,11 +122,21 @@ describe("Given the JSON input with an empty editor", () => {
 describe("Given a drag in progress over the editor", () => {
   beforeEach(() => {
     render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
-    fireEvent.dragOver(dropZone());
+  });
+
+  describe("when the user drags over the editor", () => {
+    beforeEach(() => {
+      fireEvent.dragOver(dropZone());
+    });
+
+    it("then the drop hint should be displayed", () => {
+      expect(screen.getByText(/solte o arquivo aqui/i)).toBeInTheDocument();
+    });
   });
 
   describe("when the drag leaves the editor", () => {
     beforeEach(() => {
+      fireEvent.dragOver(dropZone());
       fireEvent.dragLeave(dropZone(), { relatedTarget: document.body });
     });
 
@@ -174,10 +184,10 @@ describe("Given a file dragged over the editor", () => {
 });
 
 describe("Given a file dropped onto the editor without files", () => {
-  let onLoadFile: ReturnType<typeof vi.fn>;
+  let onLoadFile: ((file: File) => void) | undefined;
 
   beforeEach(() => {
-    onLoadFile = vi.fn();
+    onLoadFile = vi.fn<(file: File) => void>();
     render(<JsonInput value="" onChange={vi.fn()} onLoadFile={onLoadFile} />);
     fireEvent.drop(dropZone(), { dataTransfer: { files: [] } });
   });
@@ -189,7 +199,7 @@ describe("Given a file dropped onto the editor without files", () => {
 
 describe("Given the hidden file input without files selected", () => {
   beforeEach(() => {
-    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn() as (file: File) => void} />);
     const input = fileInput();
     attachFiles(input, []);
     fireEvent.change(input);

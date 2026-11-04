@@ -1,8 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import themeSource from "./theme.ts?raw";
 import { codeEditorTheme } from "./theme.ts";
+
+// Read theme source from disk (same pattern as themeCss below)
+// `?raw` sobre .ts não é suportado pelo TypeScript, então lemos o arquivo direto
+const themeSource = readFileSync(join(process.cwd(), "src/components/code-editor/theme.ts"), "utf8");
 
 // `?raw` sobre .css é neutralizado pelo Vitest (CSS vira módulo vazio), então a
 // fonte canônica de tokens é lida direto do disco (cwd = raiz do repo).
