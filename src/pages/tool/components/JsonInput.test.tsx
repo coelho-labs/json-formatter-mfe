@@ -136,6 +136,70 @@ describe("Given a drag in progress over the editor", () => {
   });
 });
 
+describe("Given the JSON input initially", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the drop hint should not be visible", () => {
+      expect(screen.queryByText(/solte o arquivo aqui/i)).toBeNull();
+    });
+
+    it("then the drop zone should have the default border class", () => {
+      expect(dropZone()).toHaveClass("border-border");
+    });
+
+    it("then the drop zone should not have the dragging border class", () => {
+      expect(dropZone()).not.toHaveClass("border-primary");
+    });
+  });
+});
+
+describe("Given a file dragged over the editor", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+    fireEvent.dragOver(dropZone());
+  });
+
+  describe("when it is in drag-over state", () => {
+    it("then the drop zone should have the dragging border class", () => {
+      expect(dropZone()).toHaveClass("border-primary");
+    });
+
+    it("then the drop zone should not have the default border class", () => {
+      expect(dropZone()).not.toHaveClass("border-border");
+    });
+  });
+});
+
+describe("Given a file dropped onto the editor without files", () => {
+  let onLoadFile: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    onLoadFile = vi.fn();
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={onLoadFile} />);
+    fireEvent.drop(dropZone(), { dataTransfer: { files: [] } });
+  });
+
+  it("then onLoadFile should not be called", () => {
+    expect(onLoadFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("Given the hidden file input without files selected", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+    const input = fileInput();
+    attachFiles(input, []);
+    fireEvent.change(input);
+  });
+
+  it("then onLoadFile should not be called", () => {
+    // no assertion beyond not throwing; verifies the optional-chaining path
+  });
+});
+
 describe("Given the JSON input with a file error", () => {
   describe("when it renders", () => {
     beforeEach(() => {

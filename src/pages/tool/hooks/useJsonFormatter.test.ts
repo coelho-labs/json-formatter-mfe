@@ -764,3 +764,70 @@ describe("Given the formatter with no output and tree requested", () => {
     expect(view.current.canShowTree).toBe(false);
   });
 });
+
+describe("Given the formatter with copy status already idle", () => {
+  let view: FormatterView;
+  let writeText: ReturnType<typeof vi.fn>;
+
+  beforeEach(async () => {
+    writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    view = mountFormatter();
+  });
+
+  describe("when copy is called with empty output", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        await view.current.copy();
+      });
+    });
+
+    it("then the clipboard should not be called", () => {
+      expect(writeText).not.toHaveBeenCalled();
+    });
+
+    it("then the copy status should remain idle", () => {
+      expect(view.current.copyStatus).toBe("idle");
+    });
+  });
+});
+
+describe("Given the formatter with invalid JSON input", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  it("then validated should be false", () => {
+    expect(view.current.validated).toBe(false);
+  });
+
+  it("then the error should be set", () => {
+    expect(view.current.error).not.toBeNull();
+  });
+});
+
+describe("Given the formatter with error and tree view requested", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      view.current.setView("tree");
+    });
+  });
+
+  it("then the view should fall back to text", () => {
+    expect(view.current.view).toBe("text");
+  });
+});

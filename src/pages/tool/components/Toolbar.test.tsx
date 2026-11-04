@@ -463,6 +463,36 @@ describe("Given a toolbar with error positioned only on column", () => {
   });
 });
 
+describe("Given a toolbar with error at line zero", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, line: 0, column: 5 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the error badge should omit the position", () => {
+      expect(screen.queryByText(/coluna 0/)).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar with error at column zero", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, line: 2, column: 0 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the error badge should omit the position", () => {
+      expect(screen.queryByText(/linha 2/)).toBeNull();
+    });
+  });
+});
+
 describe("Given a toolbar in tree mode with tree available", () => {
   beforeEach(() => {
     renderToolbar({ canShowTree: true, view: "tree" });

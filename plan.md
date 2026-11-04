@@ -215,11 +215,11 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 - Decisão de build: `tsconfig.app.json` passou a excluir `src/**/*.test.ts(x)` e `src/test/**` — `tsc -b` não compila testes (os tipos deles são verificados por `npm run test:types`), evitando depender de `@types/node` no projeto da app.
 - `tsconfig.test.json` ganhou `"types": ["vite/client", "node"]` por causa do teste que lê CSS do disco.
 - `main.test.tsx` exige `vi.resetModules()` antes do `await import("./main.tsx")`: o cache de módulo sobrevive ao `clearMocks` e o teste veria a execução anterior.
-- Verificação: `npm run lint`, `npm run test` (13 arquivos / 298 testes), `npm run test:types` e `npm run build` verdes; `npx prettier --check` aprovado nos testes e nos docs.
+- Verificação: `npm run lint`, `npm run test` (13 arquivos / 349 testes), `npm run test:types` e `npm run build` verdes; `npx prettier --check` aprovado nos testes e nos docs.
 
 ## Pendências / pontos abertos
 - (Fora do escopo deste repo) `../AGENTS.md` da raiz cita `@originjs` e planning-poker.
-- Fase 9 em andamento: suíte ampliada de 228 → 298 testes (+70) com foco nos mutantes sobreviventes de `src/lib/json.ts` (+10 testes: entradas vazias, escape/unescape casos de borda), `src/pages/tool/hooks/useJsonFormatter.ts` (+11 testes: tab indent, empty output copy/download, tree com erro, sortKeys 4 espaços) e `src/pages/tool/components/JsonTreeView.tsx` (+12 testes: boolean/null/empty array/empty object/mixed array/deeply nested collapse/className). Falta replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
+- Fase 9 em andamento: suíte ampliada de 228 → 349 testes (+121) com foco nos mutantes sobreviventes de `src/lib/json.ts` (+10 testes), `src/pages/tool/hooks/useJsonFormatter.ts` (+16 testes), `src/pages/tool/components/JsonTreeView.tsx` (+14 testes), `src/pages/tool/components/Toolbar.tsx` (+16 testes), `src/pages/tool/Tool.page.tsx` (+1 teste) e `src/App.tsx` (+6 testes). Falta replicar o padrão em `planning-poker-mfe` e `portal-shell` antes de adotar mutation testing.
 - Fase 10 pendente: executar `npm run test:mutation` e eliminar mutantes sobreviventes nos arquivos restantes (`JsonInput.tsx`, `JsonOutput.tsx`, `Toolbar.tsx`, `Tool.page.tsx`, `App.tsx`, `Home.page.tsx`).
 
 ## Armadilhas aprendidas (reviews)
@@ -239,4 +239,4 @@ O `AGENTS.md` descreve o contrato (atemporal); este arquivo descreve o andamento
 
 ## Última atualização
 - 2026-11-03 · commit base: 21a02fc · erros de parse traduzidos para pt-BR (toolbar + lint inline), padrão Context-Driven Testing registrado no AGENTS.md, infra de jsdom e **suíte piloto entregue** (13 arquivos / 228 testes, verdes em lint/test/test:types/build) — testes e ajustes de docs ainda em working tree, não commitados; Fase 9 🟨, Fase 10 pendente
-- 2026-11-03 · suíte ampliada de 228 → 298 testes (+70) focada nos 3 arquivos críticos com mutantes sobreviventes do relatório de mutação: `src/lib/json.ts`, `src/pages/tool/hooks/useJsonFormatter.ts` e `src/pages/tool/components/JsonTreeView.tsx`. Lint, test, test:types e build verdes.
+- 2026-11-03 · suíte ampliada de 228 → 349 testes (+121) focada nos mutantes sobreviventes do relatório de mutação: `src/lib/json.ts`, `src/pages/tool/hooks/useJsonFormatter.ts`, `src/pages/tool/components/JsonTreeView.tsx`, `src/pages/tool/components/Toolbar.tsx`, `src/pages/tool/Tool.page.tsx` e `src/App.tsx`. Lint, test, test:types e build verdes.
