@@ -14,12 +14,7 @@
     "!src/lib/utils.ts",
     "!src/components/code-editor/theme.ts"
   ],
-  "reporters": [
-    "clear-text",
-    "progress",
-    "html",
-    "json"
-  ],
+  "reporters": ["clear-text", "progress", "html", "json"],
   "htmlReporter": {
     "fileName": "reports/mutation/index.html"
   },
@@ -28,16 +23,17 @@
   },
   "incremental": true,
   "incrementalFile": "reports/mutation/stryker-incremental.json",
-  "ignorePatterns": [
-    "dist",
-    ".mf",
-    "reports"
-  ],
+  "ignorePatterns": ["dist", ".mf", "reports"],
   "cleanTempDir": "always",
   "concurrency": "50%",
   "timeoutMS": 10000,
   "timeoutFactor": 2,
   "clearTextReporter": {
     "skipFull": true
+  },
+  "thresholds": {
+    "high": 90,
+    "low": 80,
+    "break": 90
   }
 }

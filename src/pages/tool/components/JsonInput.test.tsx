@@ -198,15 +198,39 @@ describe("Given a file dropped onto the editor without files", () => {
 });
 
 describe("Given the hidden file input without files selected", () => {
+  const onLoadFile = vi.fn();
+
   beforeEach(() => {
-    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn() as (file: File) => void} />);
+    render(
+      <JsonInput value="" onChange={vi.fn()} onLoadFile={onLoadFile} />,
+    );
     const input = fileInput();
     attachFiles(input, []);
     fireEvent.change(input);
   });
 
   it("then onLoadFile should not be called", () => {
-    // no assertion beyond not throwing; verifies the optional-chaining path
+    expect(onLoadFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("Given the hidden file input whose files list is unavailable", () => {
+  const onLoadFile = vi.fn();
+
+  beforeEach(() => {
+    render(
+      <JsonInput value="" onChange={vi.fn()} onLoadFile={onLoadFile} />,
+    );
+    const input = fileInput();
+    Object.defineProperty(input, "files", {
+      configurable: true,
+      value: null,
+    });
+    fireEvent.change(input);
+  });
+
+  it("then onLoadFile should not be called", () => {
+    expect(onLoadFile).not.toHaveBeenCalled();
   });
 });
 
@@ -227,6 +251,62 @@ describe("Given the JSON input with a file error", () => {
       expect(screen.getByRole("alert")).toHaveTextContent(
         /não foi possível ler o arquivo/i,
       );
+    });
+  });
+});
+
+describe("Given the JSON input drop zone", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+  });
+
+  describe("when a file is dragged over it", () => {
+    it("then the browser default should be prevented", () => {
+      expect(fireEvent.dragOver(dropZone())).toBe(false);
+    });
+  });
+
+  describe("when a file is dropped onto it", () => {
+    it("then the browser default should be prevented", () => {
+      expect(
+        fireEvent.drop(dropZone(), {
+          dataTransfer: { files: [JSON_FILE] },
+        }),
+      ).toBe(false);
+    });
+  });
+});
+
+describe("Given a drag in progress over the editor", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+    fireEvent.dragOver(dropZone());
+  });
+
+  describe("when the pointer moves to a child of the drop zone", () => {
+    beforeEach(() => {
+      const leaveEvent = new Event("dragleave", { bubbles: true });
+
+      Object.defineProperty(leaveEvent, "relatedTarget", {
+        value: dropZone(),
+      });
+      fireEvent(dropZone(), leaveEvent);
+    });
+
+    it("then the drop hint should stay visible", () => {
+      expect(screen.getByText(/solte o arquivo aqui/i)).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given the JSON input drop zone with no drag in progress", () => {
+  beforeEach(() => {
+    render(<JsonInput value="" onChange={vi.fn()} onLoadFile={vi.fn()} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the drop zone should keep its positioning styles", () => {
+      expect(dropZone()).toHaveClass("relative", "h-80", "overflow-hidden");
     });
   });
 });

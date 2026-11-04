@@ -562,3 +562,177 @@ describe("Given a toolbar with validated false and no error", () => {
     });
   });
 });
+
+describe("Given a toolbar in text mode with the tree available", () => {
+  beforeEach(() => {
+    renderToolbar({ canShowTree: true, view: "text" });
+  });
+
+  describe("when it renders", () => {
+    it("then the type icon should be shown", () => {
+      expect(action(/modo/i).querySelector(".lucide-type")).not.toBeNull();
+    });
+
+    it("then the tree icon should not be shown", () => {
+      expect(action(/modo/i).querySelector(".lucide-list-tree")).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar in tree mode with the tree available", () => {
+  beforeEach(() => {
+    renderToolbar({ canShowTree: true, view: "tree" });
+  });
+
+  describe("when it renders", () => {
+    it("then the tree icon should be shown", () => {
+      expect(action(/modo/i).querySelector(".lucide-list-tree")).not.toBeNull();
+    });
+
+    it("then the type icon should not be shown", () => {
+      expect(action(/modo/i).querySelector(".lucide-type")).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar in tree mode without tree availability", () => {
+  beforeEach(() => {
+    renderToolbar({ canShowTree: false, view: "tree" });
+  });
+
+  describe("when it renders", () => {
+    it("then the mode toggle should stay enabled", () => {
+      expect(action(/modo/i)).toBeEnabled();
+    });
+  });
+});
+
+describe("Given a toolbar with no reported state", () => {
+  beforeEach(() => {
+    renderToolbar();
+  });
+
+  describe("when it renders", () => {
+    it("then no valid badge should be shown", () => {
+      expect(screen.queryByText(/json válido/i)).toBeNull();
+    });
+
+    it("then no invalid badge should be shown", () => {
+      expect(screen.queryByText(/inválido/i)).toBeNull();
+    });
+
+    it("then no copy success badge should be shown", () => {
+      expect(
+        screen.queryByText(/copiado para a área de transferência/i),
+      ).toBeNull();
+    });
+
+    it("then no copy failure badge should be shown", () => {
+      expect(screen.queryByText(/falha ao copiar/i)).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar marked as valid but holding an error", () => {
+  beforeEach(() => {
+    renderToolbar({ error: POSITIONED_ERROR, validated: true });
+  });
+
+  describe("when it renders", () => {
+    it("then no invalid badge should be shown", () => {
+      expect(screen.queryByText(/inválido/i)).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar without a validation result but holding an error", () => {
+  beforeEach(() => {
+    renderToolbar({ error: POSITIONED_ERROR, validated: null });
+  });
+
+  describe("when it renders", () => {
+    it("then no invalid badge should be shown", () => {
+      expect(screen.queryByText(/inválido/i)).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar with an error at line zero and a column", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, column: 5, line: 0 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the error badge should omit the line", () => {
+      expect(screen.queryByText(/linha 0/i)).toBeNull();
+    });
+  });
+});
+
+describe("Given a toolbar with an error without a source position", () => {
+  beforeEach(() => {
+    renderToolbar({
+      error: { ...POSITIONED_ERROR, column: -1, line: -1, position: -1 },
+      validated: false,
+    });
+  });
+
+  describe("when it renders", () => {
+    it("then the badge should show only the message", () => {
+      expect(screen.getByText(/inválido — /i).textContent).toBe(
+        `Inválido — ${POSITIONED_ERROR.message}`,
+      );
+    });
+  });
+});
+
+describe("Given a toolbar with a four-space indent selected", () => {
+  let onIndentChange: Mock<(indent: IndentOption) => void>;
+
+  beforeEach(() => {
+    onIndentChange = vi.fn<(indent: IndentOption) => void>();
+    renderToolbar({ indent: 4, onIndentChange });
+  });
+
+  describe("when the user selects the two-space indent", () => {
+    beforeEach(async () => {
+      await userEvent.click(
+        screen.getByRole("combobox", { name: /indentação/i }),
+      );
+      const option = await screen.findByRole("option", {
+        name: /2 espaços/i,
+      });
+      await userEvent.click(option);
+    });
+
+    it("then the indent should be reported as two", () => {
+      expect(onIndentChange).toHaveBeenCalledWith(2);
+    });
+  });
+});
+
+describe("Given a toolbar with a two-space indent selected", () => {
+  let onIndentChange: Mock<(indent: IndentOption) => void>;
+
+  beforeEach(() => {
+    onIndentChange = vi.fn<(indent: IndentOption) => void>();
+    renderToolbar({ indent: 2, onIndentChange });
+  });
+
+  describe("when the user selects the tab indent", () => {
+    beforeEach(async () => {
+      await userEvent.click(
+        screen.getByRole("combobox", { name: /indentação/i }),
+      );
+      const option = await screen.findByRole("option", { name: /^tab$/i });
+      await userEvent.click(option);
+    });
+
+    it("then the indent should be reported as a tab", () => {
+      expect(onIndentChange).toHaveBeenCalledWith("\t");
+    });
+  });
+});

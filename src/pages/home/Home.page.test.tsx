@@ -70,3 +70,27 @@ describe("Given the home page feature list", () => {
     });
   });
 });
+
+describe("Given the home page feature descriptions", () => {
+  beforeEach(() => {
+    renderHomeAt("/json-formatter/");
+  });
+
+  describe("when it renders", () => {
+    it("then the minify feature should explain the compaction", () => {
+      expect(
+        screen.getByText(
+          /compacte o json removendo espaços e quebras de linha/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("then the validate feature should explain the diagnostics", () => {
+      expect(
+        screen.getByText(
+          /detecte erros de sintaxe com mensagem e posição/i,
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+});

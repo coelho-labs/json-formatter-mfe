@@ -748,3 +748,50 @@ describe("Given unescapeJson with an empty string", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+describe("Given a parse error that reports multi-digit line and column", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    vi.spyOn(JSON, "parse").mockImplementation(() => {
+      throw new SyntaxError(
+        "JSON.parse: unexpected character at line 12 column 34 of the JSON data",
+      );
+    });
+    result = formatJson('{"a":1,}', 2);
+  });
+
+  describe("when formatJson is called", () => {
+    it("then the whole line number should be kept", () => {
+      expect(errorOf(result).line).toBe(12);
+    });
+
+    it("then the whole column number should be kept", () => {
+      expect(errorOf(result).column).toBe(34);
+    });
+  });
+});
+
+describe("Given a raw unexpected-token message with a multi-character token", () => {
+  describe("when the message is translated", () => {
+    it("then the whole token should be kept", () => {
+      expect(translateJsonErrorMessage("unexpected token 'multi'")).toBe(
+        'Token inesperado "multi"',
+      );
+    });
+  });
+});
+
+describe("Given the JSON null literal", () => {
+  let result: JsonResult;
+
+  beforeEach(() => {
+    result = sortJsonKeys("null", 2);
+  });
+
+  describe("when sortJsonKeys is called", () => {
+    it("then the null literal should be preserved", () => {
+      expect(valueOf(result)).toBe("null");
+    });
+  });
+});

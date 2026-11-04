@@ -939,3 +939,233 @@ describe("Given a tree view without className", () => {
     expect(screen.getByText("a:")).toBeInTheDocument();
   });
 });
+
+describe("Given a tree view rendering one value of each primitive type", () => {
+  beforeEach(() => {
+    render(
+      <JsonTreeView
+        value={{ text: "coelho", count: 7, flag: true, empty: null }}
+      />,
+    );
+  });
+
+  describe("when it renders", () => {
+    it("then the string value should carry the string syntax color", () => {
+      expect(screen.getByText('"coelho"')).toHaveClass(
+        "text-[var(--syntax-string)]",
+      );
+    });
+
+    it("then the string value should not carry the number syntax color", () => {
+      expect(screen.getByText('"coelho"')).not.toHaveClass(
+        "text-[var(--syntax-number)]",
+      );
+    });
+
+    it("then the string value should not carry the literal syntax color", () => {
+      expect(screen.getByText('"coelho"')).not.toHaveClass(
+        "text-[var(--syntax-literal)]",
+      );
+    });
+
+    it("then the number value should carry the number syntax color", () => {
+      expect(screen.getByText("7")).toHaveClass(
+        "text-[var(--syntax-number)]",
+      );
+    });
+
+    it("then the number value should not carry the string syntax color", () => {
+      expect(screen.getByText("7")).not.toHaveClass(
+        "text-[var(--syntax-string)]",
+      );
+    });
+
+    it("then the number value should not carry the literal syntax color", () => {
+      expect(screen.getByText("7")).not.toHaveClass(
+        "text-[var(--syntax-literal)]",
+      );
+    });
+
+    it("then the boolean value should carry the literal syntax color", () => {
+      expect(screen.getByText("true")).toHaveClass(
+        "text-[var(--syntax-literal)]",
+      );
+    });
+
+    it("then the boolean value should not carry the string syntax color", () => {
+      expect(screen.getByText("true")).not.toHaveClass(
+        "text-[var(--syntax-string)]",
+      );
+    });
+
+    it("then the boolean value should not carry the number syntax color", () => {
+      expect(screen.getByText("true")).not.toHaveClass(
+        "text-[var(--syntax-number)]",
+      );
+    });
+
+    it("then the null value should carry the literal syntax color", () => {
+      expect(screen.getByText("null")).toHaveClass(
+        "text-[var(--syntax-literal)]",
+      );
+    });
+
+    it("then the null value should not carry the string syntax color", () => {
+      expect(screen.getByText("null")).not.toHaveClass(
+        "text-[var(--syntax-string)]",
+      );
+    });
+
+    it("then the null value should not carry the number syntax color", () => {
+      expect(screen.getByText("null")).not.toHaveClass(
+        "text-[var(--syntax-number)]",
+      );
+    });
+  });
+});
+
+describe("Given a tree view with an undefined root value", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={undefined} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the value should be rendered as a JSON literal", () => {
+      expect(screen.getByText("null")).toBeInTheDocument();
+    });
+
+    it("then the literal should carry the literal syntax color", () => {
+      expect(screen.getByText("null")).toHaveClass(
+        "text-[var(--syntax-literal)]",
+      );
+    });
+  });
+});
+
+describe("Given a primitive root value", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    ({ container } = render(<JsonTreeView value={42} />));
+  });
+
+  describe("when it renders", () => {
+    it("then no property label separator should be rendered", () => {
+      expect(container).not.toHaveTextContent(":");
+    });
+  });
+});
+
+describe("Given an expanded object root node", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={{ name: "coelho" }} />);
+  });
+
+  describe("when it renders", () => {
+    it("then the root should not render an empty label separator", () => {
+      expect(screen.queryByText(":")).toBeNull();
+    });
+  });
+});
+
+describe("Given a collapsed object root node", () => {
+  beforeEach(async () => {
+    render(<JsonTreeView value={{ name: "coelho" }} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /recolher raiz/i }),
+    );
+  });
+
+  describe("when it renders collapsed", () => {
+    it("then the root should not render an empty label separator", () => {
+      expect(screen.queryByText(":")).toBeNull();
+    });
+  });
+});
+
+describe("Given a nested object node collapsed", () => {
+  beforeEach(async () => {
+    render(<JsonTreeView value={{ inner: { a: 1 } }} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /recolher inner/i }),
+    );
+  });
+
+  describe("when it renders collapsed", () => {
+    it("then the node label should stay visible", () => {
+      expect(screen.getByText("inner:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given an array whose items are objects", () => {
+  beforeEach(() => {
+    render(<JsonTreeView value={[{ nested: 7 }]} />);
+  });
+
+  describe("when the array is expanded by default", () => {
+    it("then the object item should keep its children expanded", () => {
+      expect(screen.getByText("nested:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given a tree view with a custom class", () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    ({ container } = render(
+      <JsonTreeView value={{ a: 1 }} className="custom-tree" />,
+    ));
+  });
+
+  describe("when it renders", () => {
+    it("then the container should keep its base styles", () => {
+      expect(container.firstElementChild).toHaveClass("overflow-auto");
+    });
+
+    it("then the container should include the custom class", () => {
+      expect(container.firstElementChild).toHaveClass("custom-tree");
+    });
+  });
+});
+
+describe("Given sibling keys whose escaped paths could collide on slash", () => {
+  beforeEach(async () => {
+    render(
+      <JsonTreeView value={{ "a/b": { slash: 1 }, ab: { plain: 2 } }} />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /recolher a\/b/i }),
+    );
+  });
+
+  describe("when the slashed key is collapsed", () => {
+    it("then its own children should be hidden", () => {
+      expect(screen.queryByText("slash:")).toBeNull();
+    });
+
+    it("then the colliding sibling should remain expanded", () => {
+      expect(screen.getByText("plain:")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Given sibling keys whose escaped paths could collide on tilde", () => {
+  beforeEach(async () => {
+    render(<JsonTreeView value={{ "c~d": { tilde: 1 }, cd: { plain: 2 } }} />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /recolher c~d/i }),
+    );
+  });
+
+  describe("when the tilde key is collapsed", () => {
+    it("then its own children should be hidden", () => {
+      expect(screen.queryByText("tilde:")).toBeNull();
+    });
+
+    it("then the colliding sibling should remain expanded", () => {
+      expect(screen.getByText("plain:")).toBeInTheDocument();
+    });
+  });
+});

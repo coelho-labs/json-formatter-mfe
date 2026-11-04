@@ -177,3 +177,84 @@ describe("Given the dev shell with no theme stored and system prefers light", ()
     });
   });
 });
+
+describe("Given the dev shell with the light theme stored while the system prefers dark", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(THEME_KEY, "light");
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(true);
+    goTo("/json-formatter/");
+    render(<App />);
+  });
+
+  describe("when it renders", () => {
+    it("then the stored light theme should win", () => {
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+  });
+});
+
+describe("Given the dev shell following the system theme", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(true);
+    goTo("/json-formatter/");
+    render(<App />);
+  });
+
+  describe("when it resolves the system theme", () => {
+    it("then the dark color scheme media query should be consulted", () => {
+      expect(window.matchMedia).toHaveBeenCalledWith(
+        "(prefers-color-scheme: dark)",
+      );
+    });
+  });
+});
+
+describe("Given the dev shell with the dark theme stored", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(THEME_KEY, "dark");
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(false);
+    goTo("/json-formatter/");
+    render(<App />);
+  });
+
+  describe("when it renders", () => {
+    it("then the chosen theme should be persisted as dark", () => {
+      expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+    });
+  });
+});
+
+describe("Given the dev shell toggled from dark to light", () => {
+  beforeEach(async () => {
+    localStorage.clear();
+    document.documentElement.classList.remove("dark");
+    stubPrefersDark(true);
+    goTo("/json-formatter/");
+    render(<App />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /alternar tema/i }),
+    );
+  });
+
+  describe("when the toggle is clicked again", () => {
+    beforeEach(async () => {
+      await userEvent.click(
+        screen.getByRole("button", { name: /alternar tema/i }),
+      );
+    });
+
+    it("then the document should carry the dark class again", () => {
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+    });
+
+    it("then the theme should be persisted as dark again", () => {
+      expect(localStorage.getItem(THEME_KEY)).toBe("dark");
+    });
+  });
+});

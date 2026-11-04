@@ -831,3 +831,381 @@ describe("Given the formatter with error and tree view requested", () => {
     expect(view.current.view).toBe("text");
   });
 });
+
+describe("Given the formatter with a parse error and a file error", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    const file = new File(["conteudo"], "dados.json", {
+      type: "application/json",
+    });
+    vi.spyOn(file, "text").mockRejectedValue(new Error("read failure"));
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      await view.current.loadFile(file);
+    });
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  describe("when the input is replaced", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setInput('{"b":2}');
+      });
+    });
+
+    it("then the parse error should be cleared", () => {
+      expect(view.current.error).toBeNull();
+    });
+
+    it("then the validation result should be cleared", () => {
+      expect(view.current.validated).toBeNull();
+    });
+
+    it("then the file error should be cleared", () => {
+      expect(view.current.fileError).toBeNull();
+    });
+  });
+});
+
+describe("Given the formatter with a copied output", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn(() => Promise.resolve()) },
+    });
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      await view.current.copy();
+    });
+  });
+
+  describe("when the input is replaced", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setInput('{"c":3}');
+      });
+    });
+
+    it("then the copy status should return to idle", () => {
+      expect(view.current.copyStatus).toBe("idle");
+    });
+  });
+
+  describe("when another transform is applied", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.minify();
+      });
+    });
+
+    it("then the copy status should return to idle", () => {
+      expect(view.current.copyStatus).toBe("idle");
+    });
+  });
+});
+
+describe("Given the formatter with a parse error from format", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  describe("when a successful transform is applied", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.escape();
+      });
+    });
+
+    it("then the previous error should be cleared", () => {
+      expect(view.current.error).toBeNull();
+    });
+
+    it("then the previous invalid result should be cleared", () => {
+      expect(view.current.validated).toBeNull();
+    });
+  });
+});
+
+describe("Given the formatter with a copied output and a file error", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn(() => Promise.resolve()) },
+    });
+    const file = new File(["conteudo"], "dados.json", {
+      type: "application/json",
+    });
+    vi.spyOn(file, "text").mockRejectedValue(new Error("read failure"));
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      await view.current.copy();
+    });
+    await act(async () => {
+      await view.current.loadFile(file);
+    });
+  });
+
+  describe("when validate is called", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.validate();
+      });
+    });
+
+    it("then the copy status should return to idle", () => {
+      expect(view.current.copyStatus).toBe("idle");
+    });
+
+    it("then the file error should be cleared", () => {
+      expect(view.current.fileError).toBeNull();
+    });
+  });
+});
+
+describe("Given the formatter with output ready to download", () => {
+  let view: FormatterView;
+  let createObjectURL: ReturnType<typeof vi.fn>;
+  let clickedAnchors: HTMLAnchorElement[];
+  let attachedWhenClicked: boolean | undefined;
+
+  beforeEach(async () => {
+    clickedAnchors = [];
+    createObjectURL = vi.fn(() => "blob:mock-output");
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+      function handleClick(this: HTMLAnchorElement) {
+        clickedAnchors.push(this);
+        attachedWhenClicked = this.isConnected;
+      },
+    );
+    view = mountFormatter('{"a":1}');
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  describe("when download is called", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.download();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    });
+
+    it("then the blob should carry the formatted output", async () => {
+      const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
+
+      expect(await blob.text()).toBe(view.current.output);
+    });
+
+    it("then the anchor should be attached when clicked", () => {
+      expect(attachedWhenClicked).toBe(true);
+    });
+
+    it("then the anchor should be detached after the click", () => {
+      expect(clickedAnchors[0]?.isConnected).toBe(false);
+    });
+  });
+});
+
+describe("Given the formatter with an unreadable file and a parse error", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    const file = new File(["conteudo"], "dados.json", {
+      type: "application/json",
+    });
+    vi.spyOn(file, "text").mockRejectedValue(new Error("read failure"));
+    view = mountFormatter('{"a":1,}');
+    await act(async () => {
+      await view.current.loadFile(file);
+    });
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  describe("when clear is called", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.clear();
+      });
+    });
+
+    it("then the parse error should be cleared", () => {
+      expect(view.current.error).toBeNull();
+    });
+
+    it("then the validation result should be cleared", () => {
+      expect(view.current.validated).toBeNull();
+    });
+
+    it("then the file error should be cleared", () => {
+      expect(view.current.fileError).toBeNull();
+    });
+  });
+});
+
+describe("Given the formatter with a string literal containing only spaces", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter('"   "');
+    await act(async () => {
+      view.current.unescape();
+    });
+  });
+
+  describe("when the unescaped output is observed", () => {
+    it("then the whitespace-only output should not count as output", () => {
+      expect(view.current.hasOutput).toBe(false);
+    });
+
+    it("then the whitespace-only output should not produce a tree value", () => {
+      expect(view.current.treeValue).toBeNull();
+    });
+
+    it("then the tree view should remain unavailable", () => {
+      expect(view.current.canShowTree).toBe(false);
+    });
+  });
+});
+
+describe("Given the formatter with valid input but no output yet", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.setView("tree");
+      await Promise.resolve();
+    });
+  });
+
+  describe("when format is called after the fallback", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.format();
+      });
+    });
+
+    it("then the view should stay in text mode", () => {
+      expect(view.current.view).toBe("text");
+    });
+  });
+});
+
+describe("Given the formatter with formatted output already available", () => {
+  let view: FormatterView;
+
+  beforeEach(async () => {
+    view = mountFormatter(VALID_INPUT);
+    await act(async () => {
+      view.current.format();
+    });
+  });
+
+  describe("when the tree view is requested", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setView("tree");
+        await Promise.resolve();
+      });
+    });
+
+    it("then the view should switch to tree", () => {
+      expect(view.current.view).toBe("tree");
+    });
+
+    it("then the parsed tree value should be exposed", () => {
+      expect(view.current.treeValue).toEqual({ b: 1, a: [3, 2] });
+    });
+  });
+});
+
+describe("Given the formatter mounted with an idle copy status under fake timers", () => {
+  let view: FormatterView;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    view = mountFormatter();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("when the input is typed while the copy status stays idle", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setInput(VALID_INPUT);
+      });
+    });
+
+    it("then no copy reset timer should be scheduled", () => {
+      expect(vi.getTimerCount()).toBe(0);
+    });
+  });
+});
+
+describe("Given the formatter with a copied output under fake timers", () => {
+  let view: FormatterView;
+  let idleTimerBaseline: number;
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn(() => Promise.resolve()) },
+    });
+    view = mountFormatter(VALID_INPUT);
+    idleTimerBaseline = vi.getTimerCount();
+    await act(async () => {
+      view.current.format();
+    });
+    await act(async () => {
+      await view.current.copy();
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("when the input is replaced before the feedback expires", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        view.current.setInput('{"c":3}');
+      });
+    });
+
+    it("then the pending copy reset timer should be cancelled", () => {
+      expect(vi.getTimerCount()).toBe(idleTimerBaseline);
+    });
+  });
+});
