@@ -1,0 +1,76 @@
+name: CI/CD Pipeline - Portal Shell
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # 🧪 JOB 1: Quality and Tests (Fail Fast)
+  test-and-validate:
+    name: Validate, Test & Mutation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Run Unit Tests
+        run: npx vitest run --reporter=default --reporter=github-actions --reporter=junit --outputFile.junit=./reports/unit-tests.xml
+
+      - name: Run Mutation Tests
+        run: GITHUB_STEP_SUMMARY=/dev/null npm run test:mutation
+
+      - name: Mutation summary
+        if: always()
+        run: |
+          f=reports/mutation/mutation.json
+          [ -f "$f" ] || exit 0
+          jq -r '
+            [.files[].mutants[].status] | group_by(.) | map({(.[0]): length}) | add as $c
+            | ($c.Killed // 0) as $k
+            | ($c.Timeout // 0) as $t
+            | ($c.Survived // 0) as $s
+            | ($c.NoCoverage // 0) as $n
+            | ($k + $t + $s + $n) as $valid
+            | (if $valid == 0 then 0 else ((($k + $t) * 10000 / $valid | round) / 100) end) as $score
+            | "## Mutation Testing\n\n- **Score**: \($score)%\n- Killed: \($k + $t)\n- Survived: \($s)\n- No coverage: \($n)\n"
+          ' "$f" >> "$GITHUB_STEP_SUMMARY"
+
+  # 🚀 JOB 2: Deploy on Vercel
+  deploy-to-vercel:
+    name: Deploy to Vercel
+    needs: test-and-validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
