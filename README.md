@@ -2,6 +2,13 @@
 
 Módulo remoto (Micro Frontend) utilitário do ecossistema Coelho Labs. Ferramenta de JSON 100% client-side — formatar, minificar, validar e transformar — servida ao `portal-shell` via Module Federation.
 
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Module Federation](https://img.shields.io/badge/Module_Federation-MFE-8A2BE2)](https://module-federation.io)
+[![CI/CD Pipeline - JSON Formatter MFE](https://github.com/coelho-labs/json-formatter-mfe/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/coelho-labs/json-formatter-mfe/actions/workflows/ci-cd.yml)
+
 ## Requisitos
 
 - Node.js `^24.22.2` (declarado em `engines` no `package.json`).
